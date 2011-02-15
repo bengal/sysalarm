@@ -15,8 +15,10 @@
 #define CONF_EMAIL_METHOD_SMTP 2
 
 struct global_config {
-	char *email_dest;
-	char email_method;
+	char *email_from;
+	char *email_to;
+	char *email_subject;
+	int email_method;
 };
 
 struct alarm_condition {

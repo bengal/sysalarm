@@ -156,8 +156,26 @@ void set_default_property(char *key, char *value)
 	if(key == NULL)
 		return;
 
-	if(!strcmp(key, "")){
+	debug("Default property %s = %s\n", key, value);
 
+	if(!strcmp(key, "email_from")){
+		global_config.email_from = strdup(value);
+	} else if(!strcmp(key, "email_to")){
+		global_config.email_to = strdup(value);
+	} else if(!strcmp(key, "email_method")){
+
+		if(!strcmp(value, "local")){
+			global_config.email_method = CONF_EMAIL_METHOD_LOCAL;
+		} else if (!strcmp(value, "smtp")){
+			global_config.email_method = CONF_EMAIL_METHOD_SMTP;
+		} else {
+			die("Unknown email method '%s'", value);
+		}
+
+	} else if(!strcmp(key, "email_subject")){
+		global_config.email_subject = strdup(value);
+	} else {
+		die("Unknown property '%s' in default section", key);
 	}
 }
 
@@ -229,7 +247,7 @@ void parse_config_file(char *file_name)
 		if(is_blank_line(line))
 			continue;
 
-		if(current_alarm == NULL){
+		if(current_alarm == NULL && !default_section){
 			char *section_name = parse_section_name(line);
 			if(strcmp(section_name, "alarm") == 0){
 				current_alarm = malloc(sizeof(struct alarm_condition));
@@ -274,9 +292,6 @@ void parse_config_file(char *file_name)
 		} else {
 			set_alarm_property(key, value);
 		}
-
-
-
 	}
 
 }
