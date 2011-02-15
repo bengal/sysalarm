@@ -3,11 +3,14 @@
  *
  */
 
-#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/vfs.h>
+
+#include "config.h"
+#include "util.h"
 
 #define CAST_DISK_CONFIG(cfg,dest) struct disk_alarm_options *dest = (struct disk_alarm_options *)cfg->specific_config
 
@@ -37,18 +40,19 @@ static int disk_check_alarm(struct alarm_condition *config)
 
 
 
-static void disk_parse_config_option(struct alarm_condition *config, char *key, char *value)
+static int disk_parse_config_option(struct alarm_condition *config, char *key, char *value)
 {
 	CAST_DISK_CONFIG(config, opt);
 
 	if(!strcmp(key, "device")){
 		opt->device = strdup(value);
+		return 0;
 	} else if(!strcmp(key, "threshold")){
 		opt->threshold = atoi(value);
-	} else {
-		printf("Fatal. Unknown argument %s for alarm of type disk", key);
-		exit(1);
+		return 0;
 	}
+
+	return -1;
 }
 
 static void disk_check_config(struct alarm_condition *config)

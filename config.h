@@ -33,14 +33,15 @@ struct alarm_condition {
 struct alarm_type {
 	char *code;
 	void (*init_alarm_config)(struct alarm_condition *);
-	void (*parse_config_option)(struct alarm_condition *, char *, char *);
+	int (*parse_config_option)(struct alarm_condition *, char *, char *);
 	void (*check_config)(struct alarm_condition *);
 	int (*check_alarm)(struct alarm_condition *);
 };
 
 
-struct global_config *parse_config_file(char *file);
+void parse_config_file(char *file);
 
 extern struct alarm_condition alarms[];
+extern struct global_config global_config;
 
 #endif /* CONFIG_H_ */

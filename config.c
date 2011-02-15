@@ -10,6 +10,7 @@
 
 struct global_config global_config;
 struct alarm_condition *current_alarm = NULL;
+int default_section;
 
 struct alarm_condition alarms[MAX_ALARM_NUM];
 
@@ -150,9 +151,59 @@ void insert_alarm(struct alarm_condition *alarm)
 	die("You can't define more than %d alarms!\n", MAX_ALARM_NUM);
 }
 
+void set_default_property(char *key, char *value)
+{
+	if(key == NULL)
+		return;
+
+	if(!strcmp(key, "")){
+
+	}
+}
+
+void set_alarm_property(char *key, char *value)
+{
+	if(key == NULL)
+		return;
+
+	if(!strcmp(key, "type")){
+		struct alarm_type *type = search_alarm_type(value);
+
+		if(type == NULL){
+			die("Error, type %s not found\n", value);
+		}
+
+		current_alarm->type = type;
+		current_alarm->type->init_alarm_config(current_alarm);
+		return;
+	} else if(!strcmp(key, "notification")){
+
+		if(!strcmp(value, "email")){
+			current_alarm->notify_method = NOTIFY_METHOD_EMAIL;
+		} else if(!strcmp(value, "beep")){
+			current_alarm->notify_method = NOTIFY_METHOD_BEEP;
+		} else {
+			die("Unknown notification method '%s'", value);
+		}
+
+		return;
+	} else if(!strcmp(key, "name")){
+		current_alarm->name = strdup(value);
+		return;
+	}
+
+	if(current_alarm->type == NULL){
+		die("type should be defined before any alarm-specific property in section\n");
+	}
+
+	if(current_alarm->type->parse_config_option(current_alarm, key, value) == -1){
+		die("Invalid parameter '%s' for alarm of type '%s'", key, current_alarm->type->code);
+	}
+}
 
 
-struct global_config *parse_config_file(char *file_name)
+
+void parse_config_file(char *file_name)
 {
 	FILE *file;
 	char *line;
@@ -161,12 +212,12 @@ struct global_config *parse_config_file(char *file_name)
 
 	memset(alarms, 0, sizeof(struct alarm_condition) * 100);
 	memset(&global_config, 0, sizeof(struct global_config));
+	default_section = 0;
 
-	printf("Parsing file %s\n", file_name);
+	debug("Parsing file %s\n", file_name);
 
 	if((file = fopen(file_name, "r")) == NULL){
-		printf("Fatal error opening configuration file %s\n", file_name);
-		exit(1);
+		die("Error opening configuration file %s\n", file_name);
 	}
 
 	line = malloc(BUF_LEN);
@@ -174,7 +225,6 @@ struct global_config *parse_config_file(char *file_name)
 	while((read = getline(&line, &len, file)) != -1){
 
 		line_num++;
-		printf("line %d\n", line_num);
 
 		if(is_blank_line(line))
 			continue;
@@ -183,9 +233,10 @@ struct global_config *parse_config_file(char *file_name)
 			char *section_name = parse_section_name(line);
 			if(strcmp(section_name, "alarm") == 0){
 				current_alarm = malloc(sizeof(struct alarm_condition));
+			} else if(!strcmp(section_name, "default")){
+				default_section = 1;
 			} else {
-				printf("Default section not yet implemented!\n");
-				exit(1);
+				die("Unknow section type '%s'", section_name);
 			}
 
 			continue;
@@ -193,9 +244,13 @@ struct global_config *parse_config_file(char *file_name)
 
 		if(is_end_section(line)){
 
+			if(default_section){
+				default_section = 0;
+				continue;
+			}
+
 			if(current_alarm->type == NULL){
-				printf("Error type NULL");
-				exit(1);
+				die("You must specify an alarm type for every alarm section");
 			}
 
 			current_alarm->type->check_config(current_alarm);
@@ -208,56 +263,21 @@ struct global_config *parse_config_file(char *file_name)
 
 		char *sep = strchr(line, '=');
 		if(sep == NULL){
-			printf("Fatal: syntax error in %s, line %d\n", file_name, line_num);
+			die("Syntax error in %s, line %d\n", file_name, line_num);
 		}
 
 		char *key = trim(strtok(line, "="));
 		char *value = trim(strtok(NULL, ""));
 
-		if(key == NULL)
-			continue;
-
-		if(!strcmp(key, "type")){
-			struct alarm_type *type = search_alarm_type(value);
-
-			if(type == NULL){
-				printf("Error, type %s not found\n", value);
-			} else {
-				printf("Type %s found\n", type->code);
-			}
-
-			current_alarm->type = type;
-			current_alarm->type->init_alarm_config(current_alarm);
-			continue;
-		} else if(!strcmp(key, "notification")){
-
+		if(default_section){
+			set_default_property(key, value);
+		} else {
+			set_alarm_property(key, value);
 		}
 
-		if(current_alarm->type == NULL){
-			printf("type should be the first property in section\n");
-			exit(1);
-		}
 
-		current_alarm->type->parse_config_option(current_alarm, key, value);
-
-
-/*
-		if(is_end_section(line)){
-
-		}
-
-		char *key = strtok(line, "\t =");
-
-		if(key != NULL){
-			char *value = strtok(NULL, "=");
-			if(value != NULL){
-				set_config_parameter(key, value);
-			}
-		}*/
 
 	}
-
-	return &global_config;
 
 }
 

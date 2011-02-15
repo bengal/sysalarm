@@ -12,9 +12,11 @@ void die(char *fmt, ...){
 
 	va_list argList;
 
+	printf("FATAL ERROR:\n");
 	va_start(argList, fmt);
 	vprintf(fmt, argList);
 	va_end(argList);
+	printf("\n");
 
 	exit(1);
 }
