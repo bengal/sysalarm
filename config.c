@@ -18,6 +18,8 @@ struct alarm_condition alarms[MAX_ALARM_NUM];
  * ALARM TYPES
  */
 extern struct alarm_type sa_alarm_type_disk;
+extern struct alarm_type sa_alarm_type_tcp;
+
 struct alarm_type eof_type = {
 	.code = NULL
 };
@@ -25,6 +27,7 @@ struct alarm_type eof_type = {
 struct alarm_type *alarm_types[] = {
 
 		&sa_alarm_type_disk,
+		&sa_alarm_type_tcp,
 
 		/* array terminator */
 		&eof_type
@@ -122,19 +125,18 @@ void set_config_parameter(char *key, char *value)
 
 struct alarm_type *search_alarm_type(char *type)
 {
-	int i = 0;
+	int i;
 
-	while(1){
+	for(i = 0; ; i++){
 		char *code = alarm_types[i]->code;
 
 		if(code == NULL)
-			break;
+			return NULL;
 
 		if(!strcmp(code, type))
 			return alarm_types[i];
 	}
 
-	return NULL;
 }
 
 void insert_alarm(struct alarm_condition *alarm)
@@ -143,7 +145,7 @@ void insert_alarm(struct alarm_condition *alarm)
 
 	for(i = 0; i < MAX_ALARM_NUM; i++){
 		if(alarms[i].type == NULL){
-			memcpy(&alarm[i], alarms, sizeof(struct alarm_condition));
+			memcpy(&alarms[i], alarm, sizeof(struct alarm_condition));
 			return;
 		}
 	}
@@ -271,6 +273,7 @@ void parse_config_file(char *file_name)
 				die("You must specify an alarm type for every alarm section");
 			}
 
+			debug("Adding new alarm of type %s\n", current_alarm->type->code);
 			current_alarm->type->check_config(current_alarm);
 			insert_alarm(current_alarm);
 			free(current_alarm); // TODO static

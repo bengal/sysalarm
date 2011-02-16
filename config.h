@@ -5,6 +5,12 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#define SPECIFIC_CONFIG(dest,config) dest = (typeof (dest))config->specific_config
+
+#define ALARM_ON 1
+#define ALARM_OFF 2
+#define ALARM_ERROR 3
+
 #define BUF_LEN 2048
 #define MAX_ALARM_NUM 1024
 

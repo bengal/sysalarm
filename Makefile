@@ -1,7 +1,7 @@
 
 CC = colorgcc
 TARGET = sysalarm
-OBJS = util.o config.o alarm_disk.o  sysalarm.o  
+OBJS = util.o config.o alarm_disk.o alarm_tcp.o sysalarm.o  
 CFLAGS = -Wall -Wno-pointer-sign -ggdb
 LFLAGS = 
 

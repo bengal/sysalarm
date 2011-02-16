@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "util.h"
 
 void print_usage()
 {
@@ -25,6 +26,8 @@ void check_alarms()
 
 		if(alarms[i].type == NULL)
 			break;
+
+		debug("Checkin alarm %d : %s\n", i, alarms[i].type->code);
 
 		int result = alarms[i].type->check_alarm(&alarms[i]);
 
