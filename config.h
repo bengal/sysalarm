@@ -1,55 +1,43 @@
 /*
  * config.h
+ *
  */
 
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define SPECIFIC_CONFIG(dest,config) dest = (typeof (dest))config->specific_config
+#define MAX_ELEMENTS 100
 
-#define ALARM_ON 1
-#define ALARM_OFF 2
-#define ALARM_ERROR 3
-
-#define BUF_LEN 2048
-#define MAX_ALARM_NUM 1024
-
-#define NOTIFY_METHOD_EMAIL 1
-#define NOTIFY_METHOD_BEEP 2
-
-#define CONF_EMAIL_METHOD_LOCAL 1
-#define CONF_EMAIL_METHOD_SMTP 2
-
-struct global_config {
-	char *email_from;
-	char *email_to;
-	char *email_subject;
-	int email_method;
-};
-
-struct alarm_condition {
-
+struct option {
 	char *name;
-	struct alarm_type *type;
-
-	int notify_method;
-	int check_interval;
-
-	void *specific_config;
+	char *value;
+	struct pair *next;
 };
 
-struct alarm_type {
-	char *code;
-	void (*init_alarm_config)(struct alarm_condition *);
-	int (*parse_config_option)(struct alarm_condition *, char *, char *);
-	void (*check_config)(struct alarm_condition *);
-	int (*check_alarm)(struct alarm_condition *);
+struct action {
+	char *name;
+	struct action_type *type;
+	struct option *options;
 };
 
+struct action_type {
+	char *name;
+	int (*set_options)(struct action *action, struct option *options);
+	int (*trigger_action)(struct action *action);
+};
 
-void parse_config_file(char *file);
+struct condition {
+	char *name;
+	struct condition_type *type;
+	struct option *options;
+};
 
-extern struct alarm_condition alarms[];
-extern struct global_config global_config;
+struct condition_type {
+	char *name;
+	struct action *action;
+	int (*set_options)(struct condition *condition, struct option *options);
+	int (*check_condition)(struct condition *condition);
+};
+
 
 #endif /* CONFIG_H_ */

@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void die(char *fmt, ...){
+void die(char *fmt, ...)
+{
 
 	va_list argList;
 
@@ -21,7 +22,8 @@ void die(char *fmt, ...){
 	exit(1);
 }
 
-void debug(char *fmt, ...){
+void debug(char *fmt, ...)
+{
 	va_list argList;
 
 	printf("DEBUG: ");
@@ -29,4 +31,3 @@ void debug(char *fmt, ...){
 	vprintf(fmt, argList);
 	va_end(argList);
 }
-

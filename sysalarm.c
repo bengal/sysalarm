@@ -8,30 +8,28 @@
 
 void print_usage()
 {
-  printf(
-	  "Usage: sysalarm [OPTIONS]\n\n"
-	  "    -c CONFIG_FILE    specify a configuration file other than default\n"
-	  "    -t ALARM          simulate an alarm\n"
-	  "    -s                report a summary of configuration options\n"
-	  "    -l                check for alarm conditions\n"
-	  "    -h                display usage\n"
-	  "");
+	printf("Usage: sysalarm [OPTIONS]\n\n"
+	       "    -c CONFIG_FILE    specify a configuration file other than default\n"
+	       "    -t ALARM          simulate an alarm\n"
+	       "    -s                report a summary of configuration options\n"
+	       "    -l                check for alarm conditions\n"
+	       "    -h                display usage\n" "");
 
 }
 
 void check_alarms()
 {
 	int i;
-	for(i = 0; i < MAX_ALARM_NUM; i++){
+	for (i = 0; i < MAX_ALARM_NUM; i++) {
 
-		if(alarms[i].type == NULL)
+		if (alarms[i].type == NULL)
 			break;
 
 		debug("Checkin alarm %d : %s\n", i, alarms[i].type->code);
 
 		int result = alarms[i].type->check_alarm(&alarms[i]);
 
-		if(result == 1){
+		if (result == 1) {
 			printf("ALARM\n");
 		}
 	}
@@ -64,5 +62,5 @@ int main(int argc, char **argv)
 	parse_config_file(config_file);
 	check_alarms();
 
-  return 0;
+	return 0;
 }

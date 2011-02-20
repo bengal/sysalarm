@@ -23,14 +23,15 @@ static int disk_check_alarm(struct alarm_condition *config)
 	struct disk_alarm_options *opt = SPECIFIC_CONFIG(opt, config);
 	struct statfs stat;
 
-	if(statfs(opt->device, &stat) == -1)
+	if (statfs(opt->device, &stat) == -1)
 		return ALARM_ERROR;
 
 	long disk_usage = stat.f_bfree * 100 / stat.f_blocks;
-	debug("Disk usage for %s : %ld / %ld = %ld\n", opt->device, stat.f_bfree, stat.f_blocks, disk_usage);
+	debug("Disk usage for %s : %ld / %ld = %ld\n", opt->device, stat.f_bfree,
+	      stat.f_blocks, disk_usage);
 
 	unsigned int usage = disk_usage;
-	if(usage >= opt->threshold)
+	if (usage >= opt->threshold)
 		return ALARM_ON;
 
 	return ALARM_OFF;
@@ -38,14 +39,15 @@ static int disk_check_alarm(struct alarm_condition *config)
 
 
 
-static int disk_parse_config_option(struct alarm_condition *config, char *key, char *value)
+static int disk_parse_config_option(struct alarm_condition *config, char *key,
+				    char *value)
 {
 	struct disk_alarm_options *opt = SPECIFIC_CONFIG(opt, config);
 
-	if(!strcmp(key, "device")){
+	if (!strcmp(key, "device")) {
 		opt->device = strdup(value);
 		return 0;
-	} else if(!strcmp(key, "threshold")){
+	} else if (!strcmp(key, "threshold")) {
 		opt->threshold = atoi(value);
 		return 0;
 	}
@@ -57,12 +59,14 @@ static void disk_check_config(struct alarm_condition *config)
 {
 	struct disk_alarm_options *opt = SPECIFIC_CONFIG(opt, config);
 
-	if(opt->device == NULL){
-		die("Alarm %s (type %s) requires parameter 'device'\n", config->name, config->type->code );
+	if (opt->device == NULL) {
+		die("Alarm %s (type %s) requires parameter 'device'\n", config->name,
+		    config->type->code);
 	}
 
-	if(opt->threshold < 1 || opt->threshold > 99){
-		die("Alarm %s (type %s) requires parameter 'threshold'\n", config->name, config->type->code );
+	if (opt->threshold < 1 || opt->threshold > 99) {
+		die("Alarm %s (type %s) requires parameter 'threshold'\n", config->name,
+		    config->type->code);
 	}
 }
 
@@ -79,7 +83,3 @@ struct alarm_type sa_alarm_type_disk = {
 	.check_config = disk_check_config,
 	.check_alarm = disk_check_alarm,
 };
-
-
-
-
