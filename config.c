@@ -11,8 +11,17 @@
 struct condition conditions[MAX_ELEMENTS];
 struct action actions[MAX_ELEMENTS];
 
-struct condition_type *condition_types[] = {};
-struct action_type *action_types[] = {};
+struct condition_type dummy_condition_type = {.name = NULL};
+
+struct condition_type *condition_types[] = {
+		&dummy_condition_type
+};
+
+struct action_type dummy_action_type = {.name = NULL};
+
+struct action_type *action_types[] = {
+		&dummy_action_type
+};
 
 /* Is this really needed ? */
 void initialize_structs()
@@ -72,7 +81,7 @@ struct action *search_action(char *name)
 struct condition_type *search_condition_type(char *name)
 {
 	int i;
-	for(i = 0; i < MAX_ELEMENTS; i++){
+	for(i = 0; ; i++){
 
 		if(condition_types[i]->name == NULL)
 			break;
@@ -86,7 +95,7 @@ struct condition_type *search_condition_type(char *name)
 struct action_type *search_action_type(char *name)
 {
 	int i;
-	for(i = 0; i < MAX_ELEMENTS; i++){
+	for(i = 0; ; i++){
 
 		if(action_types[i]->name == NULL)
 			break;

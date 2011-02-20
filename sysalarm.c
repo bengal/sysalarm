@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "parse.h"
 #include "util.h"
 
 void print_usage()
@@ -17,7 +18,7 @@ void print_usage()
 
 }
 
-void check_alarms()
+/*void check_alarms()
 {
 	int i;
 	for (i = 0; i < MAX_ALARM_NUM; i++) {
@@ -33,7 +34,7 @@ void check_alarms()
 			printf("ALARM\n");
 		}
 	}
-}
+}*/
 
 int main(int argc, char **argv)
 {
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
 	}
 
 	parse_config_file(config_file);
-	check_alarms();
+	//check_alarms();
 
 	return 0;
 }
