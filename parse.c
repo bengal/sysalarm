@@ -53,8 +53,8 @@ int is_end_section(char *str)
 struct option_value *search_option(struct option_value *head, char *name)
 {
 	struct option_value *opt;
-	for(opt = head; opt != NULL; opt = opt->next){
-		if(!strcmp(opt->name, name)){
+	for (opt = head; opt != NULL; opt = opt->next) {
+		if (!strcmp(opt->name, name)) {
 			return opt;
 		}
 	}
@@ -100,10 +100,10 @@ void add_option(struct option_value **options, char *name, char *value)
 	new_opt->value = strdup(value);
 	new_opt->next = NULL;
 
-	if(*options == NULL){
+	if (*options == NULL) {
 		*options = new_opt;
 	} else {
-		for(last = *options; last->next != NULL; last = last->next);
+		for (last = *options; last->next != NULL; last = last->next);
 		last->next = new_opt;
 	}
 }
@@ -114,17 +114,17 @@ void create_new_condition(struct option_value *options)
 	struct option_value *type_option;
 	struct condition_type *type;
 
-	if(!condition)
+	if (!condition)
 		die("Too many conditions");
 
 	type_option = search_option(options, "type");
 
-	if(!type_option)
+	if (!type_option)
 		die("You must specify a type for every condition");
 
 	type = search_condition_type(type_option->value);
 
-	if(!type)
+	if (!type)
 		die("The condition type '%s' does not exist", type_option->value);
 
 	condition->type = type;
@@ -137,17 +137,17 @@ void create_new_action(struct option_value *options)
 	struct option_value *type_option;
 	struct action_type *type;
 
-	if(!action)
+	if (!action)
 		die("Too many actions");
 
 	type_option = search_option(options, "type");
 
-	if(!type_option)
+	if (!type_option)
 		die("You must specify a type for every action");
 
 	type = search_action_type(type_option->value);
 
-	if(!type)
+	if (!type)
 		die("The action type '%s' does not exist", type_option->value);
 
 	action->type = type;
@@ -180,19 +180,20 @@ void parse_config_file(char *file_name)
 
 		if (current_section == NULL) {
 			current_section = parse_section_name(line);
-			if(current_section == NULL)
+			if (current_section == NULL)
 				die("Expected start of section at line %d", line_num);
 			continue;
 		}
 
 		if (is_end_section(line)) {
 
-			if(!strcmp(current_section, "condition")){
+			if (!strcmp(current_section, "condition")) {
 				create_new_condition(options);
-			} else if(!strcmp(current_section, "action")){
+			} else if (!strcmp(current_section, "action")) {
 				create_new_action(options);
 			} else {
-				die("Unknown section name %s at line %d", current_section, line_num);
+				die("Unknown section name %s at line %d", current_section,
+				    line_num);
 			}
 
 			current_section = NULL;
@@ -211,7 +212,3 @@ void parse_config_file(char *file_name)
 
 	}
 }
-
-
-
-

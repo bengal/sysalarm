@@ -16,26 +16,29 @@ struct disk_condition_config {
 	int threshold;
 };
 
-static int disk_cond_set_options(struct condition *condition, struct option_value *options)
+static int disk_cond_set_options(struct condition *condition,
+				 struct option_value *options)
 {
 	struct option_value *option;
 
-	struct disk_condition_config *config = malloc(sizeof(struct disk_condition_config));
+	struct disk_condition_config *config =
+	    malloc(sizeof(struct disk_condition_config));
 	condition->specific_config = config;
 
-	for(option = options; option != NULL; option = option->next){
-		if(!strcmp(option->name, "name")){
+	for (option = options; option != NULL; option = option->next) {
+		if (!strcmp(option->name, "name")) {
 			/* TODO remove these common options in parse.c */
-		} else if(!strcmp(option->name, "action")){
+		} else if (!strcmp(option->name, "action")) {
 			/* TODO remove these common options in parse.c */
-		} else if(!strcmp(option->name, "type")){
+		} else if (!strcmp(option->name, "type")) {
 			/* TODO remove these common options in parse.c */
-		} else if(!strcmp(option->name, "device")){
+		} else if (!strcmp(option->name, "device")) {
 			config->device = strdup(option->value);
-		} else if(!strcmp(option->name, "threshold")){
+		} else if (!strcmp(option->name, "threshold")) {
 			config->threshold = atoi(option->value);
 		} else {
-			die("Unknown option '%s' for condition '%s'", option->name, condition->name);
+			die("Unknown option '%s' for condition '%s'", option->name,
+			    condition->name);
 		}
 	}
 
@@ -52,7 +55,7 @@ static int disk_cond_check_alarm(struct condition *condition)
 
 	long disk_usage = stat.f_bfree * 100 / stat.f_blocks;
 	debug("Disk usage for %s : %ld / %ld = %ld\n", config->device, stat.f_bfree,
-			stat.f_blocks, disk_usage);
+	      stat.f_blocks, disk_usage);
 
 	unsigned int usage = disk_usage;
 
