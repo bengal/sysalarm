@@ -17,6 +17,7 @@ struct option_value {
 	char *name;
 	char *value;
 	struct option_value *next;
+	int specific;
 };
 
 struct action {

@@ -15,6 +15,6 @@ $(TARGET): $(OBJS)
 
 clean: 
 	-rm *.o
-	
+
 indent:
-	-indent -kr -i8 -l90 -nbbo -sc *.c ; rm *~
+	-indent -kr -i8 -l100 -nbbo -sc *.c ; rm *~

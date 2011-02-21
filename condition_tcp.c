@@ -25,13 +25,11 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 	condition->specific_config = config;
 
 	for (option = options; option != NULL; option = option->next) {
-		if (!strcmp(option->name, "name")) {
-			/* TODO remove these common options in parse.c */
-		} else if (!strcmp(option->name, "action")) {
-			/* TODO remove these common options in parse.c */
-		} else if (!strcmp(option->name, "type")) {
-			/* TODO remove these common options in parse.c */
-		} else if (!strcmp(option->name, "host")) {
+
+		if(!option->specific)
+			continue;
+
+		if (!strcmp(option->name, "host")) {
 			config->host = strdup(option->value);
 		} else if (!strcmp(option->name, "port")) {
 			config->port = atoi(option->value);
@@ -40,6 +38,9 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 			    condition->name);
 		}
 	}
+
+	if(config->host == NULL || config->port == 0)
+		die("Tcp condition: you must supply both host and port parameters");
 
 	return 0;
 }

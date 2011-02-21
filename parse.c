@@ -99,6 +99,7 @@ void add_option(struct option_value **options, char *name, char *value)
 	new_opt->name = strdup(name);
 	new_opt->value = strdup(value);
 	new_opt->next = NULL;
+	new_opt->specific = 1;
 
 	if (*options == NULL) {
 		*options = new_opt;
@@ -111,47 +112,81 @@ void add_option(struct option_value **options, char *name, char *value)
 void create_new_condition(struct option_value *options)
 {
 	struct condition *condition = new_condition();
-	struct option_value *type_option;
+	struct option_value *option;
 	struct condition_type *type;
 
 	if (!condition)
 		die("Too many conditions");
 
-	type_option = search_option(options, "type");
+	/* Initialize condition type */
+	option = search_option(options, "type");
 
-	if (!type_option)
+	if (!option)
 		die("You must specify a type for every condition");
 
-	type = search_condition_type(type_option->value);
+	option->specific = 0;
+	type = search_condition_type(option->value);
 
 	if (!type)
-		die("The condition type '%s' does not exist", type_option->value);
+		die("The condition type '%s' does not exist", option->value);
 
 	condition->type = type;
 	type->set_options(condition, options);
+
+	/* Initialize condition name */
+	option = search_option(options, "name");
+
+	if(!option)
+		die("You must specify a name for every condition");
+
+	option->specific = 0;
+	condition->name = option->value;
+
+	/* Initialize condition action */
+	option = search_option(options, "action");
+
+	if(!option)
+		die("You must specify an alarm for every condition");
+
+	option->specific = 0;
+	struct action *action = search_action(option->value);
+
+	if(!action)
+		die("The action with name '%s' is undefined", option->value);
 }
 
 void create_new_action(struct option_value *options)
 {
 	struct action *action = new_action();
-	struct option_value *type_option;
+	struct option_value *option;
 	struct action_type *type;
 
 	if (!action)
 		die("Too many actions");
 
-	type_option = search_option(options, "type");
+	/* Initialize action type */
+	option = search_option(options, "type");
 
-	if (!type_option)
+	if (!option)
 		die("You must specify a type for every action");
 
-	type = search_action_type(type_option->value);
+	option->specific = 0;
+	type = search_action_type(option->value);
 
 	if (!type)
-		die("The action type '%s' does not exist", type_option->value);
+		die("The action type '%s' does not exist", option->value);
 
 	action->type = type;
 	type->set_options(action, options);
+
+	/* Initialize action name */
+	option = search_option(options, "name");
+
+	if(!option)
+		die("You must specify a name for every condition");
+
+	option->specific = 0;
+	action->name = option->value;
 }
 
 void parse_config_file(char *file_name)
