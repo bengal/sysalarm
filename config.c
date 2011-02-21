@@ -11,16 +11,22 @@
 struct condition conditions[MAX_ELEMENTS];
 struct action actions[MAX_ELEMENTS];
 
-struct condition_type dummy_condition_type = {.name = NULL };
+extern struct condition_type condition_type_disk;
+extern struct condition_type condition_type_tcp;
+struct condition_type condition_type_dummy = { .name = NULL };
 
 struct condition_type *condition_types[] = {
-	&dummy_condition_type
+	&condition_type_disk,
+	&condition_type_tcp,
+	&condition_type_dummy
 };
 
-struct action_type dummy_action_type = {.name = NULL };
+extern struct action_type action_type_mail;
+struct action_type action_type_dummy = { .name = NULL };
 
 struct action_type *action_types[] = {
-	&dummy_action_type
+	&action_type_mail,
+	&action_type_dummy
 };
 
 /* Is this really needed ? */

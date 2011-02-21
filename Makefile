@@ -3,6 +3,7 @@ TARGET = sysalarm
 OBJS = util.o config.o parse.o \
 	condition_disk.o \
 	condition_tcp.o \
+	action_mail.o \
 	sysalarm.o  
 CFLAGS = -Wall -Wno-pointer-sign -ggdb
 LFLAGS = 

@@ -45,7 +45,7 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 	return 0;
 }
 
-static int tcp_cond_check_alarm(struct condition *condition)
+static int tcp_cond_check_condition(struct condition *condition)
 {
 	struct tcp_condition_config *config = condition->specific_config;
 	int sockfd;
@@ -78,7 +78,7 @@ static int tcp_cond_check_alarm(struct condition *condition)
 
 
 struct condition_type condition_type_tcp = {
-	.name = "tcp",
+	.name = "TCP",
 	.set_options = tcp_cond_set_options,
-	.check_condition = tcp_cond_check_alarm,
+	.check_condition = tcp_cond_check_condition,
 };

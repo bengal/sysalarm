@@ -44,7 +44,7 @@ static int disk_cond_set_options(struct condition *condition, struct option_valu
 	return 0;
 }
 
-static int disk_cond_check_alarm(struct condition *condition)
+static int disk_cond_check_condition(struct condition *condition)
 {
 	struct disk_condition_config *config = condition->specific_config;
 	struct statfs stat;
@@ -66,7 +66,7 @@ static int disk_cond_check_alarm(struct condition *condition)
 
 
 struct condition_type condition_type_disk = {
-	.name = "disk",
+	.name = "DISK",
 	.set_options = disk_cond_set_options,
-	.check_condition = disk_cond_check_alarm,
+	.check_condition = disk_cond_check_condition,
 };
