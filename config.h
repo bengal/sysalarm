@@ -54,4 +54,7 @@ struct action *search_action(char *name);
 struct condition_type *search_condition_type(char *name);
 struct action_type *search_action_type(char *name);
 
+extern struct condition conditions[];
+extern struct action actions[];
+
 #endif /* CONFIG_H_ */

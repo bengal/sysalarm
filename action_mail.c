@@ -20,6 +20,12 @@ struct mail_action_config {
 	int mail_method;
 };
 
+void check_configuration(struct mail_action_config *config)
+{
+
+}
+
+
 int mail_action_set_options(struct action *action, struct option_value *options)
 {
 	struct option_value *option;
@@ -33,15 +39,21 @@ int mail_action_set_options(struct action *action, struct option_value *options)
 
 		if (!strcmp(option->name, "mail_from")) {
 			config->mail_from = strdup(option->value);
+
 		} else if (!strcmp(option->name, "mail_to")) {
 			config->mail_to = strdup(option->value);
+
 		} else if (!strcmp(option->name, "mail_subject")) {
 			config->mail_subject = strdup(option->value);
+
 		} else if (!strcmp(option->name, "mail_method")) {
+
 			if(!strcmp(option->value, "local")){
 				config->mail_method = METHOD_LOCAL;
+
 			} else if(!strcmp(option->value, "smtp")){
 				config->mail_method = METHOD_SMTP;
+
 			} else {
 				die("Unknown mail method %s", option->value);
 			}
@@ -49,13 +61,16 @@ int mail_action_set_options(struct action *action, struct option_value *options)
 			die("Unknown option '%s' for action '%s'", option->name, action->name);
 		}
 	}
+
+	check_configuration(config);
+
 	return 0;
 }
 
+
 int mail_action_trigger_action(struct action *action)
 {
-	debug("Sending an email... ");
-	debug("Done :)");
+	debug("Sending an email... DONE\n");
 
 	return 0;
 }

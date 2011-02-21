@@ -18,23 +18,25 @@ void print_usage()
 
 }
 
-/*void check_alarms()
+void check_alarms()
 {
 	int i;
-	for (i = 0; i < MAX_ALARM_NUM; i++) {
+	int result;
 
-		if (alarms[i].type == NULL)
+	for(i = 0; i < MAX_ELEMENTS; i++){
+
+		if(conditions[i].name == NULL)
 			break;
 
-		debug("Checkin alarm %d : %s\n", i, alarms[i].type->code);
+		result = conditions[i].type->check_condition(&conditions[i]);
 
-		int result = alarms[i].type->check_alarm(&alarms[i]);
-
-		if (result == 1) {
-			printf("ALARM\n");
+		if(result == CONDITION_ON || result == CONDITION_ERROR){
+			struct action *action = conditions[i].action;
+			action->type->trigger_action(action);
 		}
+
 	}
-}*/
+}
 
 int main(int argc, char **argv)
 {
@@ -61,7 +63,7 @@ int main(int argc, char **argv)
 	}
 
 	parse_config_file(config_file);
-	//check_alarms();
+	check_alarms();
 
 	return 0;
 }

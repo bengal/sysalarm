@@ -139,6 +139,8 @@ void create_new_condition(struct option_value *options)
 	if(!action)
 		die("The action with name '%s' is undefined", option->value);
 
+	condition->action = action;
+
 	/* Initialize condition type */
 	option = search_option(options, "type");
 
