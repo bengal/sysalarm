@@ -118,21 +118,6 @@ void create_new_condition(struct option_value *options)
 	if (!condition)
 		die("Too many conditions");
 
-	/* Initialize condition type */
-	option = search_option(options, "type");
-
-	if (!option)
-		die("You must specify a type for every condition");
-
-	option->specific = 0;
-	type = search_condition_type(option->value);
-
-	if (!type)
-		die("The condition type '%s' does not exist", option->value);
-
-	condition->type = type;
-	type->set_options(condition, options);
-
 	/* Initialize condition name */
 	option = search_option(options, "name");
 
@@ -153,6 +138,22 @@ void create_new_condition(struct option_value *options)
 
 	if(!action)
 		die("The action with name '%s' is undefined", option->value);
+
+	/* Initialize condition type */
+	option = search_option(options, "type");
+
+	if (!option)
+		die("You must specify a type for every condition");
+
+	option->specific = 0;
+	type = search_condition_type(option->value);
+
+	if (!type)
+		die("The condition type '%s' does not exist", option->value);
+
+	condition->type = type;
+	type->set_options(condition, options);
+
 }
 
 void create_new_action(struct option_value *options)
@@ -163,6 +164,15 @@ void create_new_action(struct option_value *options)
 
 	if (!action)
 		die("Too many actions");
+
+	/* Initialize action name */
+	option = search_option(options, "name");
+
+	if(!option)
+		die("You must specify a name for every condition");
+
+	option->specific = 0;
+	action->name = option->value;
 
 	/* Initialize action type */
 	option = search_option(options, "type");
@@ -179,14 +189,6 @@ void create_new_action(struct option_value *options)
 	action->type = type;
 	type->set_options(action, options);
 
-	/* Initialize action name */
-	option = search_option(options, "name");
-
-	if(!option)
-		die("You must specify a name for every condition");
-
-	option->specific = 0;
-	action->name = option->value;
 }
 
 void parse_config_file(char *file_name)
@@ -231,6 +233,7 @@ void parse_config_file(char *file_name)
 				    line_num);
 			}
 
+			options = NULL;
 			current_section = NULL;
 			continue;
 		}

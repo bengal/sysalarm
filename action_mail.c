@@ -14,8 +14,8 @@
 #define METHOD_SMTP 2
 
 struct mail_action_config {
-	char *mail_sender;
-	char *mail_recipient;
+	char *mail_from;
+	char *mail_to;
 	char *mail_subject;
 	int mail_method;
 };
@@ -31,10 +31,10 @@ int mail_action_set_options(struct action *action, struct option_value *options)
 		if(!option->specific)
 			continue;
 
-		if (!strcmp(option->name, "mail_sender")) {
-			config->mail_sender = strdup(option->value);
-		} else if (!strcmp(option->name, "mail_recipient")) {
-			config->mail_recipient = strdup(option->value);
+		if (!strcmp(option->name, "mail_from")) {
+			config->mail_from = strdup(option->value);
+		} else if (!strcmp(option->name, "mail_to")) {
+			config->mail_to = strdup(option->value);
 		} else if (!strcmp(option->name, "mail_subject")) {
 			config->mail_subject = strdup(option->value);
 		} else if (!strcmp(option->name, "mail_method")) {

@@ -12,7 +12,7 @@
 #include "util.h"
 
 struct disk_condition_config {
-	char *device;
+	char *file;
 	int threshold;
 };
 
@@ -28,18 +28,17 @@ static int disk_cond_set_options(struct condition *condition, struct option_valu
 		if(!option->specific)
 			continue;
 
-		if (!strcmp(option->name, "device")) {
-			config->device = strdup(option->value);
+		if (!strcmp(option->name, "file")) {
+			config->file = strdup(option->value);
 		} else if (!strcmp(option->name, "threshold")) {
 			config->threshold = atoi(option->value);
 		} else {
-			die("Unknown option '%s' for condition '%s'", option->name,
-			    condition->name);
+			die("Unknown option '%s' for condition '%s'", option->name, condition->name);
 		}
 	}
 
-	if(config->device == NULL || config->threshold == 0)
-		die("Disk condition: you must supply device and threshold parameters");
+	if(config->file == NULL || config->threshold == 0)
+		die("Disk condition: you must supply 'file' and 'threshold' parameters");
 
 	return 0;
 }
@@ -49,11 +48,11 @@ static int disk_cond_check_condition(struct condition *condition)
 	struct disk_condition_config *config = condition->specific_config;
 	struct statfs stat;
 
-	if (statfs(config->device, &stat) == -1)
+	if (statfs(config->file, &stat) == -1)
 		return CONDITION_ERROR;
 
 	long disk_usage = stat.f_bfree * 100 / stat.f_blocks;
-	debug("Disk usage for %s : %ld / %ld = %ld\n", config->device, stat.f_bfree,
+	debug("Disk usage for %s : %ld / %ld = %ld\n", config->file, stat.f_bfree,
 	      stat.f_blocks, disk_usage);
 
 	unsigned int usage = disk_usage;
