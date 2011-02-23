@@ -1,0 +1,7 @@
+
+- implement more conditions and actions
+- smtp mail (with starttls)
+- more robust configuration parsing
+- action chaining
+- syslog logging
+- distros packaging

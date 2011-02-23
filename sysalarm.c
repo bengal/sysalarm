@@ -14,25 +14,29 @@ void print_usage()
 	       "    -t ALARM          simulate an alarm\n"
 	       "    -s                report a summary of configuration options\n"
 	       "    -l                check for alarm conditions\n"
-	       "    -h                display usage\n" "");
+	       "    -h                display usage\n\n" "");
 
 }
 
 void check_alarms()
 {
 	int i;
-	int result;
+	int cond_res;
+	int action_res;
 
 	for(i = 0; i < MAX_ELEMENTS; i++){
 
 		if(conditions[i].name == NULL)
 			break;
 
-		result = conditions[i].type->check_condition(&conditions[i]);
+		cond_res = conditions[i].type->check_condition(&conditions[i]);
 
-		if(result == CONDITION_ON || result == CONDITION_ERROR){
+		if(cond_res == CONDITION_ON || cond_res == CONDITION_ERROR){
 			struct action *action = conditions[i].action;
-			action->type->trigger_action(action);
+			action_res = action->type->trigger_action(action);
+			if(action_res != ACTION_OK){
+				printf("Action %s returned an ERROR!\n", action->name);
+			}
 		}
 
 	}

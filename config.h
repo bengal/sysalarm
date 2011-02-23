@@ -13,6 +13,9 @@
 #define CONDITION_OFF 2
 #define CONDITION_ERROR 3
 
+#define ACTION_OK 4
+#define ACTION_ERROR 5
+
 struct option_value {
 	char *name;
 	char *value;
