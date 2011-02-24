@@ -110,12 +110,10 @@ int mail_action_trigger_action(struct action *action)
 	struct mail_action_config *config = action->specific_config;
 
 	if(config->mail_method == METHOD_LOCAL){
-		send_mail_local(config);
+		return send_mail_local(config);
 	} else {
-		send_mail_smtp(config);
+		return send_mail_smtp(config);
 	}
-
-	return ACTION_ERROR;
 }
 
 

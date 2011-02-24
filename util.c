@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/*#define DBG */
+
 void die(char *fmt, ...)
 {
 
@@ -22,6 +24,7 @@ void die(char *fmt, ...)
 	exit(1);
 }
 
+#ifdef DBG
 void debug(char *fmt, ...)
 {
 	va_list argList;
@@ -31,3 +34,6 @@ void debug(char *fmt, ...)
 	vprintf(fmt, argList);
 	va_end(argList);
 }
+#else
+void debug(char *fmt, ...){}
+#endif
