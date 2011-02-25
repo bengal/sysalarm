@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "config.h"
 #include "util.h"
@@ -23,8 +25,50 @@ struct mail_action_config {
 
 static int send_mail_smtp(struct mail_action_config *config)
 {
-	debug("Mail method SMTP not implemented yet\n");
-	return ACTION_ERROR;
+	int sockfd;
+	FILE *sock;
+	char hostname[256];
+	time_t rawtime;
+	char timestr[256];
+	struct tm *timeinfo;
+	char message[1024];
+
+	if((sockfd = connect_tcp(config->smtp_server, 25)) == -1){
+		return ACTION_ERROR;
+	}
+
+	if((sock = fdopen(sockfd, "w")) == NULL){
+		return ACTION_ERROR;
+	}
+
+	if(gethostname(hostname, 256) == -1){
+		strncpy(hostname, "sysalarm", 256);
+	}
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(timestr, 256, "%c", timeinfo);
+
+	snprintf(message, 1024, "An alarm condition was detected\n"); /* TODO: which? */
+
+	fprintf(sock, "HELO %s\n", hostname);
+	fprintf(stdout, "HELO %s\n", hostname);
+	fflush(sock);
+	fprintf(sock, "MAIL FROM: <%s>\r\n", config->mail_from);
+	fflush(sock);
+	fprintf(sock, "RCPT TO: <%s>\n", config->mail_to);
+	fflush(sock);
+	fprintf(sock, "DATA\n");
+	fflush(sock);
+	fprintf(sock, "From: %s\nTo: %s\nSubject: %s\nDate: %s\n%s\r\n.\r\n",
+			config->mail_from, config->mail_to, config->mail_subject,
+			timestr, message);
+	fprintf(sock, "QUIT\n");
+	fflush(sock);
+
+	fclose(sock);
+
+	return ACTION_OK;
 }
 
 static int send_mail_local(struct mail_action_config *config)

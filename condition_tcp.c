@@ -49,31 +49,13 @@ static int tcp_cond_check_condition(struct condition *condition)
 {
 	struct tcp_condition_config *config = condition->specific_config;
 	int sockfd;
-	struct hostent *server;
-	struct sockaddr_in serv_addr;
 
-	debug("Connecting to %s %hd\n", config->host, config->port);
-
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		return CONDITION_ERROR;
+	if((sockfd = connect_tcp(config->host, config->port)) >= 0){
+		shutdown(sockfd, SHUT_RDWR);
+		return CONDITION_OFF;
 	}
 
-	if ((server = gethostbyname(config->host)) == NULL) {
-		return CONDITION_ON;
-	}
-
-	memset(&serv_addr, 0, sizeof(struct sockaddr_in));
-	serv_addr.sin_family = AF_INET;
-	memcpy(&serv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-	serv_addr.sin_port = htons(config->port);
-
-	if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		return CONDITION_ON;
-	}
-
-	shutdown(sockfd, SHUT_RDWR);
-
-	return CONDITION_OFF;
+	return CONDITION_ON;
 }
 
 
