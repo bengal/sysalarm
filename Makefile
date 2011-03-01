@@ -6,7 +6,7 @@ OBJS = util.o config.o parse.o \
 	action_mail.o \
 	sysalarm.o  
 CFLAGS = -Wall -Wno-pointer-sign -ggdb
-LFLAGS = 
+LFLAGS = -lssl
 
 $(TARGET): $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(LFLAGS) 

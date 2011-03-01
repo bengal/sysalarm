@@ -45,17 +45,20 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 	return 0;
 }
 
-static int tcp_cond_check_condition(struct condition *condition)
+static void tcp_cond_check_condition(struct condition *condition, struct result *result)
 {
 	struct tcp_condition_config *config = condition->specific_config;
 	int sockfd;
 
 	if((sockfd = connect_tcp(config->host, config->port)) >= 0){
 		shutdown(sockfd, SHUT_RDWR);
-		return CONDITION_OFF;
+		result->code = CONDITION_OFF;
+		return;;
 	}
 
-	return CONDITION_ON;
+	snprintf(result->desc, RESULT_DESC_LEN, "TCP port %d unreachable on host '%s'",
+			config->port, config->host);
+	result->code = CONDITION_ON;
 }
 
 

@@ -23,7 +23,8 @@ struct mail_action_config {
 	int mail_method;
 };
 
-static int send_mail_smtp(struct mail_action_config *config)
+static void send_mail_smtp(struct mail_action_config *config, struct result *cond_res,
+		struct result *result)
 {
 	int sockfd;
 	FILE *sock;
@@ -34,11 +35,16 @@ static int send_mail_smtp(struct mail_action_config *config)
 	char message[1024];
 
 	if((sockfd = connect_tcp(config->smtp_server, 25)) == -1){
-		return ACTION_ERROR;
+		result->code = ACTION_ERROR;
+		snprintf(result->desc, RESULT_DESC_LEN, "Could not connecto to %s",
+				config->smtp_server);
+		return;
 	}
 
 	if((sock = fdopen(sockfd, "w")) == NULL){
-		return ACTION_ERROR;
+		result->code = ACTION_ERROR;
+		snprintf(result->desc, RESULT_DESC_LEN, "fdopen error");
+		return;
 	}
 
 	if(gethostname(hostname, 256) == -1){
@@ -49,10 +55,10 @@ static int send_mail_smtp(struct mail_action_config *config)
 	timeinfo = localtime(&rawtime);
 	strftime(timestr, 256, "%c", timeinfo);
 
-	snprintf(message, 1024, "An alarm condition was detected\n"); /* TODO: which? */
+	snprintf(message, 1024, "An alarm condition was detected:\n%s",
+			result_get_description(cond_res));
 
 	fprintf(sock, "HELO %s\n", hostname);
-	fprintf(stdout, "HELO %s\n", hostname);
 	fflush(sock);
 	fprintf(sock, "MAIL FROM: <%s>\r\n", config->mail_from);
 	fflush(sock);
@@ -68,25 +74,30 @@ static int send_mail_smtp(struct mail_action_config *config)
 
 	fclose(sock);
 
-	return ACTION_OK;
+	result->code =  ACTION_OK;
 }
 
-static int send_mail_local(struct mail_action_config *config)
+static void send_mail_local(struct mail_action_config *config, struct result *cond_res,
+		struct result *result)
 {
 	debug("Sending an email using local method\n");
 
 	FILE *pipe;
 	if((pipe = popen("/usr/lib/sendmail -t", "w")) == NULL){
-		debug("Error calling /usr/lib/sendmail. Verify it is installed"
+		result->code = ACTION_ERROR;
+		snprintf(result->desc, RESULT_DESC_LEN,
+				"Error calling /usr/lib/sendmail. Verify it is installed"
 				" and configured properly.");
-		return ACTION_ERROR;
+		return;
 	}
 	fprintf(pipe, "To: %s\n", config->mail_to);
 	fprintf(pipe, "From: %s\n", config->mail_from);
 	fprintf(pipe, "Subject: %s\n\n", config->mail_subject);
 	fprintf(pipe, "TODO insert body here\n\n");
 	pclose(pipe);
-	return ACTION_OK;
+
+	result->code = ACTION_OK;
+	return;
 }
 
 
@@ -149,14 +160,15 @@ int mail_action_set_options(struct action *action, struct option_value *options)
 }
 
 
-int mail_action_trigger_action(struct action *action)
+void mail_action_trigger_action(struct action *action, struct result *cond_res,
+		struct result *result)
 {
 	struct mail_action_config *config = action->specific_config;
 
 	if(config->mail_method == METHOD_LOCAL){
-		return send_mail_local(config);
+		send_mail_local(config, cond_res, result);
 	} else {
-		return send_mail_smtp(config);
+		send_mail_smtp(config, cond_res, result);
 	}
 }
 

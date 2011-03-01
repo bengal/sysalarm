@@ -23,17 +23,26 @@ struct option_value {
 	int specific;
 };
 
+#define RESULT_DESC_LEN 1024
+
+/* Result of a condition or action */
+struct result {
+	int code;					/* result code */
+	char desc[RESULT_DESC_LEN];	/* result description */
+	char *ext_desc;				/* optional extended description */
+};
+
 struct action {
 	char *name;
 	struct action_type *type;
-	struct option_value *options;
 	void *specific_config;
 };
 
 struct action_type {
 	char *name;
 	int (*set_options)(struct action *action, struct option_value *options);
-	int (*trigger_action)(struct action *action);
+	void (*trigger_action)(struct action *action, struct result *cond_result,
+			struct result *result);
 };
 
 struct condition {
@@ -47,8 +56,10 @@ struct condition {
 struct condition_type {
 	char *name;
 	int (*set_options)(struct condition *condition, struct option_value *options);
-	int (*check_condition)(struct condition *condition);
+	void (*check_condition)(struct condition *condition, struct result *result);
 };
+
+
 
 struct condition *new_condition();
 struct action *new_action();
@@ -56,6 +67,8 @@ struct condition *search_condition(char *name);
 struct action *search_action(char *name);
 struct condition_type *search_condition_type(char *name);
 struct action_type *search_action_type(char *name);
+
+char *result_get_description(struct result *);
 
 extern struct condition conditions[];
 extern struct action actions[];

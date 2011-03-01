@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 #include "parse.h"
@@ -18,24 +19,26 @@ void print_usage()
 
 }
 
-void check_alarms(int tr_action)
+void check_alarms(int trigger_action)
 {
 	int i;
-	int cond_res;
-	int action_res;
+	struct result cond_res;
+	struct result action_res;
 
 	for(i = 0; i < MAX_ELEMENTS; i++){
 
 		if(conditions[i].name == NULL)
 			break;
 
-		cond_res = conditions[i].type->check_condition(&conditions[i]);
+		memset(&cond_res, 0, sizeof(struct result));
+		conditions[i].type->check_condition(&conditions[i], &cond_res);
 
-		if(cond_res == CONDITION_ON || cond_res == CONDITION_ERROR){
-			if(tr_action){
+		if(cond_res.code == CONDITION_ON || cond_res.code == CONDITION_ERROR){
+
+			if(trigger_action){
 				struct action *action = conditions[i].action;
-				action_res = action->type->trigger_action(action);
-				if(action_res != ACTION_OK){
+				action->type->trigger_action(action, &cond_res, &action_res);
+				if(action_res.code != ACTION_OK){
 					printf("Action %s returned an ERROR!\n", action->name);
 				}
 			} else {
@@ -49,10 +52,17 @@ void check_alarms(int tr_action)
 
 void simulate_alarm(char *condition_name)
 {
+	struct result action_result;
+	struct result fake_cond_result;
 	struct condition *cond = search_condition(condition_name);
+
 	if(!cond)
 		die("Condition '%s' not found", condition_name);
-	cond->action->type->trigger_action(cond->action);
+
+	memset(&fake_cond_result, 0, sizeof(struct result));
+	memset(&action_result, 0, sizeof(struct result));
+
+	cond->action->type->trigger_action(cond->action, &fake_cond_result, &action_result);
 }
 
 void print_config_summary()

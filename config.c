@@ -111,3 +111,8 @@ struct action_type *search_action_type(char *name)
 	}
 	return NULL;
 }
+
+char *result_get_description(struct result *result)
+{
+	return result->ext_desc == NULL ? result->desc : result->ext_desc;
+}
