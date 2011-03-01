@@ -101,7 +101,7 @@ static void send_mail_local(struct mail_action_config *config, struct result *co
 }
 
 
-void check_configuration(struct mail_action_config *config)
+static void check_configuration(struct mail_action_config *config)
 {
 	if(config->mail_from == NULL)
 		die("Parameter 'mail_from' is required for action MAIL");
@@ -115,10 +115,11 @@ void check_configuration(struct mail_action_config *config)
 }
 
 
-int mail_action_set_options(struct action *action, struct option_value *options)
+static int mail_action_set_options(struct action *action, struct option_value *options)
 {
 	struct option_value *option;
-	struct mail_action_config *config = malloc(sizeof(struct mail_action_config));
+	struct mail_action_config *config = calloc(1, sizeof(struct mail_action_config));
+	CHECK_MALLOC(config);
 	action->specific_config = config;
 
 	for (option = options; option != NULL; option = option->next) {
@@ -160,7 +161,7 @@ int mail_action_set_options(struct action *action, struct option_value *options)
 }
 
 
-void mail_action_trigger_action(struct action *action, struct result *cond_res,
+static void mail_action_trigger_action(struct action *action, struct result *cond_res,
 		struct result *result)
 {
 	struct mail_action_config *config = action->specific_config;

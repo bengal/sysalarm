@@ -20,7 +20,8 @@ static int disk_cond_set_options(struct condition *condition, struct option_valu
 {
 	struct option_value *option;
 
-	struct disk_condition_config *config = malloc(sizeof(struct disk_condition_config));
+	struct disk_condition_config *config = calloc(1, sizeof(struct disk_condition_config));
+	CHECK_MALLOC(config);
 	condition->specific_config = config;
 
 	for (option = options; option != NULL; option = option->next) {

@@ -96,6 +96,7 @@ void add_option(struct option_value **options, char *name, char *value)
 	struct option_value *new_opt;
 
 	new_opt = malloc(sizeof(struct option_value));
+	CHECK_MALLOC(new_opt);
 	new_opt->name = strdup(name);
 	new_opt->value = strdup(value);
 	new_opt->next = NULL;
@@ -209,6 +210,7 @@ void parse_config_file(char *file_name)
 	}
 
 	line = malloc(BUF_LEN);
+	CHECK_MALLOC(line);
 
 	while ((read = getline(&line, &len, file)) != -1) {
 

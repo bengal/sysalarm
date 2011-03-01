@@ -21,8 +21,10 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 {
 	struct option_value *option;
 
-	struct tcp_condition_config *config = malloc(sizeof(struct tcp_condition_config));
+	struct tcp_condition_config *config = calloc(1, sizeof(struct tcp_condition_config));
 	condition->specific_config = config;
+
+	CHECK_MALLOC(config);
 
 	for (option = options; option != NULL; option = option->next) {
 
