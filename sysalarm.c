@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "base.h"
 #include "parse.h"
 #include "util.h"
 

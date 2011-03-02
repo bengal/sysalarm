@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "base.h"
 #include "util.h"
 
 struct cmd_action_config {

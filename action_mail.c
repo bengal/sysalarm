@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "config.h"
+#include "base.h"
 #include "util.h"
 
 #define METHOD_LOCAL 1

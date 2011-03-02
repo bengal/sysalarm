@@ -1,12 +1,12 @@
 /*
- * config2.c
+ * base.c
  */
 
 
 #include <stdio.h>
 #include <string.h>
 
-#include "config.h"
+#include "base.h"
 
 struct condition conditions[MAX_ELEMENTS];
 struct action actions[MAX_ELEMENTS];

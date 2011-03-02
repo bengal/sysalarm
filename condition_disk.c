@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/vfs.h>
 
-#include "config.h"
+#include "base.h"
 #include "util.h"
 
 struct disk_condition_config {

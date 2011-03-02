@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "config.h"
+#include "base.h"
 #include "util.h"
 
 struct tcp_condition_config {
