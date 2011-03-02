@@ -13,11 +13,13 @@ struct action actions[MAX_ELEMENTS];
 
 extern struct condition_type condition_type_disk;
 extern struct condition_type condition_type_tcp;
+extern struct condition_type condition_type_cmd;
 struct condition_type condition_type_dummy = { .name = NULL };
 
 struct condition_type *condition_types[] = {
 	&condition_type_disk,
 	&condition_type_tcp,
+	&condition_type_cmd,
 	&condition_type_dummy
 };
 
