@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-
 #include "parse.h"
 #include "base.h"
 #include "util.h"
@@ -198,7 +197,8 @@ void parse_config_file(char *file_name)
 {
 	FILE *file;
 	char *line;
-	ssize_t read, len;
+	ssize_t read;
+	size_t len;
 	int line_num = 0;
 	char *current_section = NULL;
 	struct option_value *options = NULL;

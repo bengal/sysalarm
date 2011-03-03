@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-
 #include "base.h"
 #include "util.h"
 
@@ -57,31 +56,63 @@ static int cmd_cond_set_options(struct condition *condition, struct option_value
 static void check_return_value(struct cmd_condition_config *config, int status,
 		struct result *result)
 {
-	if(status == config->expected){
+	if(WIFEXITED(status) && WEXITSTATUS(status) == config->expected) {
 		result->code = CONDITION_OFF;
 		return;
 	} else {
 		result->code = CONDITION_ON;
 		snprintf(result->desc, RESULT_DESC_LEN, "The command '%s' exited "
-				" with code %d (expected: %d)",
-				config->cmd_line, status, config->expected);
+			" with code %d (expected: %d)", config->cmd_line, status,
+				config->expected);
 		return;
 	}
 }
 
-static void set_error(struct cmd_condition_config *config, struct result *result,
-		char *message)
-{
+static void set_error(struct cmd_condition_config *config,
+		struct result *result, char *message) {
+
 	result->code = CONDITION_ERROR;
 	snprintf(result->desc, RESULT_DESC_LEN, "Error executing command '%s': %s",
 			config->cmd_line, message);
+}
+
+
+static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struct result *result)
+{
+	pid_t ret_pid;
+	int status;
+	time_t start_time = time(NULL);
+	time_t current_time;
+
+	while (1) {
+		/* check if the child has terminated */
+		ret_pid = waitpid(pid, &status, config->timeout == 0 ? 0 : WNOHANG);
+
+		if (ret_pid > 0) {
+			check_return_value(config, status, result);
+			return;
+		} else if (ret_pid == -1) {
+			set_error(config, result, "Internal error: waitpid()");
+			return;
+		}
+
+		/* child process hasn't terminated yet */
+		current_time = time(NULL);
+
+		if (current_time - start_time > config->timeout) {
+			debug("Command timeout, killing child process\n");
+			kill(pid, SIGKILL);
+			set_error(config, result, "Command timeout");
+			return;
+		}
+		sleep(1);
+	}
 }
 
 static void cmd_cond_check_condition(struct condition *condition, struct result *result)
 {
 	struct cmd_condition_config *config = condition->specific_config;
 	pid_t pid;
-	int status;
 
 	if((pid = fork()) == -1){
 
@@ -106,39 +137,7 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 
 	} else {
 		/* parent */
-
-		time_t start_time = time(NULL);
-		time_t current_time;
-		pid_t ret_pid;
-
-		while(1){
-			/* check if the child has terminated */
-			ret_pid = waitpid(pid, &status, WNOHANG);
-
-			if(ret_pid > 0){
-				check_return_value(config, status, result);
-				return;
-			} else if(ret_pid == -1){
-				set_error(config, result, "Internal error: waitpid()");
-				return;
-			}
-
-			/* child process hasn't terminated yet */
-			current_time = time(NULL);
-
-			if(current_time - start_time > config->timeout){
-
-				debug("Command timeout, killing child process\n");
-
-				/* kill child, sorry I must do it */
-				kill(pid, SIGKILL);
-
-				set_error(config, result, "Command timeout");
-				return;
-			}
-			sleep(1);
-		}
-
+		wait_for_child(pid, config, result);
 	}
 
 }
