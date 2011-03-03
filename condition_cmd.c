@@ -69,15 +69,14 @@ static void check_return_value(struct cmd_condition_config *config, int status,
 	}
 }
 
-static void set_error(struct result *result, char *message)
+static void set_error(struct cmd_condition_config *config, struct result *result,
+		char *message)
 {
 	result->code = CONDITION_ERROR;
-	snprintf(result->desc, RESULT_DESC_LEN, "%s", message);
+	snprintf(result->desc, RESULT_DESC_LEN, "Error executing command '%s': %s",
+			config->cmd_line, message);
 }
 
-/*
- * WiP
- */
 static void cmd_cond_check_condition(struct condition *condition, struct result *result)
 {
 	struct cmd_condition_config *config = condition->specific_config;
@@ -86,16 +85,24 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 
 	if((pid = fork()) == -1){
 
-		/* error */
-		result->code = CONDITION_ERROR;
-		snprintf(result->desc, RESULT_DESC_LEN, "fork()");
+		set_error(config, result, "fork()");
 		return;
 
 	} else if(pid == 0){
-		/* child */
+		/* child: launch command */
+		char *line = strdup(config->cmd_line);
+		char **args = calloc(1, sizeof(char *) * MAX_ELEMENTS);
+		char *arg = strtok(line, " ");
+		int count = 0;
+		int result;
 
-		//execvp() TODO
+		while(arg && count < MAX_ELEMENTS){
+			args[count++]  = arg;
+			arg = strtok(NULL, " ");
+		}
 
+		result = execvp(args[0], args);
+		exit(-1);
 
 	} else {
 		/* parent */
@@ -105,23 +112,31 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 		pid_t ret_pid;
 
 		while(1){
+			/* check if the child has terminated */
 			ret_pid = waitpid(pid, &status, WNOHANG);
 
 			if(ret_pid > 0){
 				check_return_value(config, status, result);
 				return;
 			} else if(ret_pid == -1){
-				set_error(result, "Internal error: waitpid()");
+				set_error(config, result, "Internal error: waitpid()");
 				return;
 			}
 
+			/* child process hasn't terminated yet */
 			current_time = time(NULL);
+
 			if(current_time - start_time > config->timeout){
-				set_error(result, "Command timeout");
+
+				debug("Command timeout, killing child process\n");
+
+				/* kill child, sorry I must do it */
+				kill(pid, SIGKILL);
+
+				set_error(config, result, "Command timeout");
 				return;
 			}
-
-			sleep(2);
+			sleep(1);
 		}
 
 	}
