@@ -14,7 +14,8 @@ void print_usage()
 	       "    -c CONFIG_FILE  specify a configuration file other than default\n"
 	       "    -t COND_NAME    simulate an alarm condition (trigger associated action)\n"
 	       "    -s              print a summary of configuration options\n"
-	       "    -l              check for alarm conditions (don't trigger actions)\n"
+	       "    -a              check for alarm conditions (don't trigger actions)\n"
+		   "    -l              list available condition and action types\n"
 	       "    -h              display usage\n\n" "");
 
 }
@@ -42,7 +43,8 @@ void check_alarms(int trigger_action)
 					printf("Action %s returned an ERROR!\n", action->name);
 				}
 			} else {
-				printf("ALARM CONDITION: %s (type:%s)\n", conditions[i].name,
+				printf("ALARM CONDITION: %s (msg: %s)(type:%s)\n", conditions[i].name,
+						cond_res.desc,
 						conditions[i].type->name);
 			}
 		}
@@ -61,6 +63,10 @@ void simulate_alarm(char *condition_name)
 
 	memset(&fake_cond_result, 0, sizeof(struct result));
 	memset(&action_result, 0, sizeof(struct result));
+
+	fake_cond_result.code = CONDITION_ON;
+	snprintf(fake_cond_result.desc, RESULT_DESC_LEN,
+			"alarm simulation for condition: %s", condition_name);
 
 	cond->action->type->trigger_action(cond->action, &fake_cond_result, &action_result);
 }
@@ -91,6 +97,29 @@ void print_config_summary()
 	}
 }
 
+extern struct condition_type *condition_types[];
+extern struct condition_type *action_types[];
+void print_types()
+{
+	int i;
+
+	printf("==== CONDITION TYPES =====\n");
+
+	for(i = 0; ; i++){
+		if(condition_types[i]->name == NULL)
+			break;
+		printf("%-20s %-60s\n", condition_types[i]->name, condition_types[i]->description);
+	}
+
+	printf("==== ACTION TYPES =====\n");
+
+	for(i = 0; ; i++){
+		if(action_types[i]->name == NULL)
+			break;
+		printf("%-20s %-60s\n", action_types[i]->name, action_types[i]->description);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int opt;
@@ -98,9 +127,13 @@ int main(int argc, char **argv)
 	char *simul_cond = NULL;
 	int summary = 0;
 	int list = 0;
+	int types = 0;
 
-	while ((opt = getopt(argc, argv, "c:t:sl")) != -1) {
+	while ((opt = getopt(argc, argv, "c:t:sla")) != -1) {
 		switch (opt) {
+		case 'l':
+			types = 1;
+			break;
 		case 'c':
 			config_file = optarg;
 			break;
@@ -114,7 +147,7 @@ int main(int argc, char **argv)
 			print_usage();
 			exit(0);
 			break;
-		case 'l':
+		case 'a':
 			list = 1;
 			break;
 		default:
@@ -124,6 +157,11 @@ int main(int argc, char **argv)
 	}
 
 	parse_config_file(config_file);
+
+	if(types){
+		print_types();
+		exit(0);
+	}
 
 	if(summary){
 		print_config_summary();

@@ -40,6 +40,7 @@ struct action {
 
 struct action_type {
 	char *name;
+	char *description;
 	int (*set_options)(struct action *action, struct option_value *options);
 	void (*trigger_action)(struct action *action, struct result *cond_result,
 			struct result *result);
@@ -55,6 +56,7 @@ struct condition {
 
 struct condition_type {
 	char *name;
+	char *description;
 	int (*set_options)(struct condition *condition, struct option_value *options);
 	void (*check_condition)(struct condition *condition, struct result *result);
 };

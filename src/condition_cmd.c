@@ -62,8 +62,8 @@ static void check_return_value(struct cmd_condition_config *config, int status,
 	} else {
 		result->code = CONDITION_ON;
 		snprintf(result->desc, RESULT_DESC_LEN, "The command '%s' exited "
-			" with code %d (expected: %d)", config->cmd_line, status,
-				config->expected);
+			" with code %d (expected: %d)", config->cmd_line,
+			WEXITSTATUS(status), config->expected);
 		return;
 	}
 }
@@ -145,6 +145,7 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 
 struct condition_type condition_type_cmd = {
 	.name = "CMD",
+	.description = "Check the exit value of a command",
 	.set_options = cmd_cond_set_options,
 	.check_condition = cmd_cond_check_condition,
 };

@@ -66,6 +66,7 @@ static void tcp_cond_check_condition(struct condition *condition, struct result 
 
 struct condition_type condition_type_tcp = {
 	.name = "TCP",
+	.description = "Tries to establish a tcp connection to a given host",
 	.set_options = tcp_cond_set_options,
 	.check_condition = tcp_cond_check_condition,
 };

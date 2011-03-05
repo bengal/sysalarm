@@ -75,6 +75,7 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 
 struct condition_type condition_type_disk = {
 	.name = "DISK",
+	.description = "Checks disk usage",
 	.set_options = disk_cond_set_options,
 	.check_condition = disk_cond_check_condition,
 };

@@ -15,6 +15,8 @@
 #define METHOD_LOCAL 1
 #define METHOD_SMTP 2
 
+#define MAIL_MSG_MAX_SIZE (128*1024)
+
 struct mail_action_config {
 	char *mail_from;
 	char *mail_to;
@@ -23,16 +25,31 @@ struct mail_action_config {
 	int mail_method;
 };
 
+static void prepare_mail_message(struct mail_action_config *config,
+		char *buffer, int size, struct result *cond_res)
+{
+	time_t rawtime;
+	char timestr[256];
+	struct tm *timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(timestr, 256, "%c", timeinfo);
+
+	snprintf(buffer, size,
+			"From: %s\nTo: %s\nSubject: %sDate: %s\n\n"
+			"An alarm condition was detected:\n%s",
+			config->mail_to, config->mail_from, config->mail_subject,
+			timestr, result_get_description(cond_res));
+}
+
 static void send_mail_smtp(struct mail_action_config *config, struct result *cond_res,
 		struct result *result)
 {
 	int sockfd;
 	FILE *sock;
 	char hostname[256];
-	time_t rawtime;
-	char timestr[256];
-	struct tm *timeinfo;
-	char message[1024];
+	char buffer[MAIL_MSG_MAX_SIZE];
 
 	if((sockfd = connect_tcp(config->smtp_server, 25)) == -1){
 		result->code = ACTION_ERROR;
@@ -51,13 +68,7 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 		strncpy(hostname, "sysalarm", 256);
 	}
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(timestr, 256, "%c", timeinfo);
-
-	snprintf(message, 1024, "An alarm condition was detected:\n%s",
-			result_get_description(cond_res));
-
+	prepare_mail_message(config, buffer, MAIL_MSG_MAX_SIZE, cond_res);
 	fprintf(sock, "HELO %s\n", hostname);
 	fflush(sock);
 	fprintf(sock, "MAIL FROM: <%s>\r\n", config->mail_from);
@@ -66,9 +77,7 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 	fflush(sock);
 	fprintf(sock, "DATA\n");
 	fflush(sock);
-	fprintf(sock, "From: %s\nTo: %s\nSubject: %s\nDate: %s\n%s\r\n.\r\n",
-			config->mail_from, config->mail_to, config->mail_subject,
-			timestr, message);
+	fprintf(sock, "%s\r\n.\r\n", buffer);
 	fprintf(sock, "QUIT\n");
 	fflush(sock);
 
@@ -80,9 +89,9 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 static void send_mail_local(struct mail_action_config *config, struct result *cond_res,
 		struct result *result)
 {
-	debug("Sending an email using local method\n");
-
+	char buffer[MAIL_MSG_MAX_SIZE];
 	FILE *pipe;
+
 	if((pipe = popen("/usr/lib/sendmail -t", "w")) == NULL){
 		result->code = ACTION_ERROR;
 		snprintf(result->desc, RESULT_DESC_LEN,
@@ -90,15 +99,16 @@ static void send_mail_local(struct mail_action_config *config, struct result *co
 				" and configured properly.");
 		return;
 	}
-	fprintf(pipe, "To: %s\n", config->mail_to);
-	fprintf(pipe, "From: %s\n", config->mail_from);
-	fprintf(pipe, "Subject: %s\n\n", config->mail_subject);
-	fprintf(pipe, "TODO insert body here\n\n");
+
+	prepare_mail_message(config, buffer, MAIL_MSG_MAX_SIZE, cond_res);
+	fprintf(pipe, "%s", buffer);
 	pclose(pipe);
 
 	result->code = ACTION_OK;
 	return;
 }
+
+
 
 
 static void check_configuration(struct mail_action_config *config)
@@ -176,6 +186,7 @@ static void mail_action_trigger_action(struct action *action, struct result *con
 
 struct action_type action_type_mail = {
 	.name = "MAIL",
+	.description = "Sends an email",
 	.set_options = mail_action_set_options,
 	.trigger_action = mail_action_trigger_action,
 };
