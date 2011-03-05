@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "base.h"
 #include "util.h"
@@ -11,13 +12,21 @@ struct cmd_action_config {
 	int background;
 };
 
+static void set_error(struct cmd_action_config *config,
+		struct result *result, char *message) {
+
+	result->code = CONDITION_ERROR;
+	snprintf(result->desc, RESULT_DESC_LEN, "Error executing command '%s': %s",
+			config->cmd_line, message);
+}
+
 static void cmd_action_trigger_action(struct action *action, struct result *cond_res,
 		struct result *result)
 {
 	struct cmd_action_config *config = action->specific_config;
 	pid_t pid;
 
-	if (background) {
+	if (config->background) {
 		if ((pid = fork()) == -1) {
 			set_error(config, result, "fork()");
 			return;

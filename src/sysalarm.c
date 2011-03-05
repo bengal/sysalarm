@@ -4,19 +4,51 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
+
 #include "base.h"
 #include "parse.h"
 #include "util.h"
 
 void print_usage()
 {
-	printf("Usage: sysalarm [OPTIONS]\n\n"
-	       "    -c CONFIG_FILE  specify a configuration file other than default\n"
-	       "    -t COND_NAME    simulate an alarm condition (trigger associated action)\n"
-	       "    -s              print a summary of configuration options\n"
-	       "    -a              check for alarm conditions (don't trigger actions)\n"
-		   "    -l              list available condition and action types\n"
-	       "    -h              display usage\n\n" "");
+
+
+	printf(
+		"sysalarm is a tool for monitoring the system for particular\n"
+		"events ('conditions') and do something ('action') when they\n"
+		"happen.\n"
+		"The program includes a predefined set of conditions and actions\n"
+		"that you can use and configure to suite your needs\n\n"
+
+		"Usage: sysalarm [OPTION]...\n\n"
+
+		"Options:\n"
+		"   -c CONFIG_FILE    specify a configuration file other than default\n"
+		"   -t COND_NAME      simulate an alarm condition (trigger associated action)\n"
+		"   -s                print a summary of configuration options\n"
+		"   -a                check for alarm conditions (don't trigger actions)\n"
+		"   -l                list available condition and action types\n"
+		"   -v, --version     output version information and exit\n"
+		"   -h, --help        display this help and exit\n\n"
+
+		"Examples:\n"
+		"  sysalarm           checks alarms using default configuration file\n"
+		"  sysalarm -t AL1    simulate alarm AL1 defined in configuration\n\n"
+
+		"Report bugs to " PACKAGE_BUGREPORT "\n\n"
+
+			);
+
+
+}
+
+void print_version()
+{
+	printf("sysalarm v" PACKAGE_VERSION "\n\n"
+		    "Copyright (C) 2011 Beniamino Galvani.\n\n"
+		    "This is free software; see the source for copying conditions.  There is NO\n"
+		    "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 
 }
 
@@ -120,16 +152,22 @@ void print_types()
 	}
 }
 
+struct option long_options[] = {
+		{"version", 0, 0, 'v'},
+		{"help", 0, 0, 'h'},
+		{0, 0, 0, 0}
+};
+
 int main(int argc, char **argv)
 {
-	int opt;
+	int opt, option_index = 0;
 	char *config_file = "sysalarm.conf";
 	char *simul_cond = NULL;
 	int summary = 0;
 	int list = 0;
 	int types = 0;
 
-	while ((opt = getopt(argc, argv, "c:t:sla")) != -1) {
+	while ((opt = getopt_long(argc, argv, "c:t:slahv", long_options, &option_index)) != -1) {
 		switch (opt) {
 		case 'l':
 			types = 1;
@@ -150,6 +188,9 @@ int main(int argc, char **argv)
 		case 'a':
 			list = 1;
 			break;
+		case 'v':
+			print_version();
+			exit(0);
 		default:
 			print_usage();
 			exit(0);

@@ -1,6 +1,7 @@
 bin_PROGRAMS = sysalarm
 
-AM_CFLAGS = -Wall 
+CFLAGS = --pedantic -Wall -O2
+LDFLAGS =
 
 sysalarm_SOURCES = util.c base.c parse.c \
 	condition_disk.c condition_tcp.c condition_cmd.c \
