@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#define SMTP_MONITOR 0
+
 #define METHOD_LOCAL 1
 #define METHOD_SMTP 2
 
@@ -30,6 +32,7 @@ struct mail_action_config {
 	int smtp_server_port;
 	char *smtp_auth_user;
 	char *smtp_auth_pass;
+	int smtp_starttls;
 	int mail_method;
 };
 
@@ -51,40 +54,40 @@ static void prepare_mail_message(struct mail_action_config *config,
 			timestr, result_get_description(cond_res));
 }
 
-static void
-monitor_cb (const char *buf, int buflen, int writing, void *arg)
+#if SMTP_MONITOR
+static void monitor_cb (const char *buf, int buflen, int writing, void *arg)
 {
-  FILE *fp = arg;
+	FILE *fp = arg;
 
-  if (writing == SMTP_CB_HEADERS)
-    {
-      fputs ("H: ", fp);
-      fwrite (buf, 1, buflen, fp);
-      return;
-    }
+	if (writing == SMTP_CB_HEADERS) {
+		fputs ("H: ", fp);
+		fwrite (buf, 1, buflen, fp);
+		return;
+	}
 
- fputs (writing ? "C: " : "S: ", fp);
- fwrite (buf, 1, buflen, fp);
- if (buf[buflen - 1] != '\n')
-   putc ('\n', fp);
+	fputs (writing ? "C: " : "S: ", fp);
+	fwrite (buf, 1, buflen, fp);
+	if (buf[buflen - 1] != '\n')
+		putc ('\n', fp);
 }
+#endif
 
 
-static int auth_interact(auth_client_request_t request, char **result, int fields, void *arg) {
+static int auth_interact(auth_client_request_t request, char **result, int fields, void *arg)
+{
 
 	int i;
 	struct mail_action_config *config = arg;
 
 	for (i = 0; i < fields; i++) {
-		if (request[i].flags & AUTH_USER)
+		if ((request[i].flags & AUTH_USER) && config->smtp_auth_user) {
 			result[i] = config->smtp_auth_user;
-		else if (request[i].flags & AUTH_PASS)
+		} else if ((request[i].flags & AUTH_PASS) && config->smtp_auth_pass) {
 			result[i] = config->smtp_auth_pass;
-		else {
-			printf("ERROR!\n");
+		} else {
+			printf("Credentials needed!\n");
 			return 0;
 		}
-
 	}
 	return 1;
 }
@@ -101,30 +104,33 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 	const smtp_status_t *status;
 	char server[1024];
 
-	snprintf(body, MAIL_MSG_MAX_SIZE, "\r\nAn alarm condition was detected:\r\n%s",
-			result_get_description(cond_res));
-
 	auth_client_init();
 	session = smtp_create_session();
+
+#if SMTP_MONITOR
 	smtp_set_monitorcb (session, monitor_cb, stdout, 1);
+#endif
 
 	authctx = auth_create_context ();
 	auth_set_mechanism_flags (authctx, AUTH_PLUGIN_PLAIN, 0);
-	auth_set_interact_cb (authctx, auth_interact, config);
-	smtp_starttls_enable (session, Starttls_ENABLED);
+	auth_set_interact_cb(authctx, auth_interact, config);
+	if(config->smtp_starttls)
+		smtp_starttls_enable(session, Starttls_ENABLED);
+	smtp_auth_set_context(session, authctx);
 
 	message = smtp_add_message(session);
 
 	snprintf(server, sizeof(server), "%s:%d", config->smtp_server, config->smtp_server_port);
 	smtp_set_server(session, server);
-	smtp_auth_set_context (session, authctx);
 
 	smtp_set_header(message, "To", NULL, config->mail_to);
 	smtp_set_header(message, "From", NULL, config->mail_from);
 	smtp_set_header(message, "Subject", config->mail_subject);
 	smtp_set_header(message, "X-Mailer", "sysalarm v" PACKAGE_VERSION " with libesmtp");
-
 	smtp_add_recipient(message, config->mail_to);
+
+	snprintf(body, MAIL_MSG_MAX_SIZE, "\r\nAn alarm condition was detected:\r\n%s",
+			result_get_description(cond_res));
 	smtp_set_message_str(message, body);
 
 	if (!smtp_start_session(session)) {
@@ -137,7 +143,16 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 		/* Report on the success or otherwise of the mail transfer.
 		 */
 		status = smtp_message_transfer_status(message);
-		printf("%d %s", status->code, (status->text != NULL) ? status->text : "\n");
+		if(status->code == 250){
+			result->code = ACTION_OK;
+			return;
+		} else {
+			result->code = ACTION_ERROR;
+			snprintf(result->desc, RESULT_DESC_LEN, "SMTP code %d - %s", status->code,
+					(status->text == NULL ? "unknown" : status->text));
+			return;
+		}
+		//printf("%d %s", status->code, (status->text != NULL) ? status->text : "\n");
 		//smtp_enumerate_recipients(message, print_recipient_status, NULL);
 	}
 
@@ -220,6 +235,9 @@ static int mail_action_set_options(struct action *action, struct option_value *o
 
 		} else if (!strcmp(option->name, "smtp_auth_pass")){
 			config->smtp_auth_pass = strdup(option->value);
+
+		} else if (!strcmp(option->name, "smtp_starttls")){
+			config->smtp_starttls = atoi(option->value);
 
 		} else if (!strcmp(option->name, "mail_method")) {
 
