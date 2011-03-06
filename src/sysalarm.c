@@ -101,6 +101,13 @@ void simulate_alarm(char *condition_name)
 			"alarm simulation for condition: %s", condition_name);
 
 	cond->action->type->trigger_action(cond->action, &fake_cond_result, &action_result);
+	if(action_result.code == ACTION_OK){
+		printf("Action successful\n");
+	} else {
+		printf("Action error: %s\n", result_get_description(&action_result));
+	}
+
+
 }
 
 void print_config_summary()
