@@ -114,6 +114,7 @@ void create_new_condition(struct option_value *options)
 	struct condition *condition = new_condition();
 	struct option_value *option;
 	struct condition_type *type;
+	struct action *action;
 
 	if (!condition)
 		die("Too many conditions");
@@ -134,7 +135,7 @@ void create_new_condition(struct option_value *options)
 		die("You must specify an alarm for every condition");
 
 	option->specific = 0;
-	struct action *action = search_action(option->value);
+	action = search_action(option->value);
 
 	if(!action)
 		die("The action with name '%s' is undefined", option->value);
@@ -202,6 +203,8 @@ void parse_config_file(char *file_name)
 	int line_num = 0;
 	char *current_section = NULL;
 	struct option_value *options = NULL;
+	char *sep;
+	char *name, *value;
 
 	debug("Parsing file %s\n", file_name);
 
@@ -242,13 +245,13 @@ void parse_config_file(char *file_name)
 			continue;
 		}
 
-		char *sep = strchr(line, '=');
+		sep = strchr(line, '=');
 		if (sep == NULL) {
 			die("Syntax error at line %d\n", line_num);
 		}
 
-		char *name = trim(strtok(line, "="));
-		char *value = trim(strtok(NULL, ""));
+		name = trim(strtok(line, "="));
+		value = trim(strtok(NULL, ""));
 
 		add_option(&options, name, value);
 

@@ -48,6 +48,8 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 {
 	struct disk_condition_config *config = condition->specific_config;
 	struct statfs stat;
+	long disk_usage;
+	unsigned int usage;
 
 	if (statfs(config->file, &stat) == -1){
 		result->code = CONDITION_ERROR;
@@ -55,12 +57,12 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 		return;
 	}
 
-	long disk_usage = stat.f_bfree * 100 / stat.f_blocks;
+	disk_usage = stat.f_bfree * 100 / stat.f_blocks;
 
 	debug("Disk usage for %s : %ld / %ld = %ld\n", config->file, stat.f_bfree,
 	      stat.f_blocks, disk_usage);
 
-	unsigned int usage = disk_usage;
+	usage = disk_usage;
 
 	if (usage >= config->threshold){
 		result->code = CONDITION_ON;

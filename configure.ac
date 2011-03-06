@@ -7,6 +7,7 @@ AC_CONFIG_SRCDIR([src/util.c])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE
+AM_SILENT_RULES([yes])
 
 # Checks for programs.
 AC_PROG_CC

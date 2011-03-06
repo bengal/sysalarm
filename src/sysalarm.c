@@ -19,7 +19,7 @@ void print_usage()
 		"events ('conditions') and do something ('action') when they\n"
 		"happen.\n"
 		"The program includes a predefined set of conditions and actions\n"
-		"that you can use and configure to suite your needs\n\n"
+		"that you can use and configure to suit your needs\n\n"
 
 		"Usage: sysalarm [OPTION]...\n\n"
 
@@ -158,10 +158,14 @@ struct option long_options[] = {
 		{0, 0, 0, 0}
 };
 
+#ifndef SYSCONFDIR
+#define SYSCONFDIR "/etc"
+#endif
+
 int main(int argc, char **argv)
 {
 	int opt, option_index = 0;
-	char *config_file = "sysalarm.conf";
+	char *config_file = SYSCONFDIR "/sysalarm.conf";
 	char *simul_cond = NULL;
 	int summary = 0;
 	int list = 0;
