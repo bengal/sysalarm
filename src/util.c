@@ -12,7 +12,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#define DBG
+#include "base.h"
+
+#define DBG 1
 
 void die(char *fmt, ...)
 {
@@ -28,7 +30,7 @@ void die(char *fmt, ...)
 	exit(1);
 }
 
-#ifdef DBG
+#if DBG
 void debug(char *fmt, ...)
 {
 	va_list argList;
@@ -42,6 +44,14 @@ void debug(char *fmt, ...)
 void debug(char *fmt, ...){}
 #endif
 
+void set_result(struct result *result, int code, char *fmt, ...)
+{
+	va_list arg_list;
+	result->code = code;
+	va_start(arg_list, fmt);
+	vsnprintf(result->desc, RESULT_DESC_LEN, fmt, arg_list);
+	va_end(arg_list);
+}
 
 int connect_tcp(char *host, unsigned short port)
 {

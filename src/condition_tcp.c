@@ -54,15 +54,13 @@ static void tcp_cond_check_condition(struct condition *condition, struct result 
 
 	if((sockfd = connect_tcp(config->host, config->port)) >= 0){
 		shutdown(sockfd, SHUT_RDWR);
-		result->code = CONDITION_OFF;
+		set_result(result, CONDITION_OFF, NULL);
 		return;;
 	}
 
-	snprintf(result->desc, RESULT_DESC_LEN, "TCP port %d unreachable on host '%s'",
+	set_result(result, CONDITION_ON, "TCP port %d unreachable on host '%s'",
 			config->port, config->host);
-	result->code = CONDITION_ON;
 }
-
 
 struct condition_type condition_type_tcp = {
 	.name = "TCP",

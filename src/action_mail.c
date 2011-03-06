@@ -8,9 +8,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
 
-#include <libesmtp.h>
 #include <auth-client.h>
+#include <libesmtp.h>
 
 #include "base.h"
 #include "util.h"
@@ -92,17 +93,27 @@ static int auth_interact(auth_client_request_t request, char **result, int field
 	return 1;
 }
 
+static void ignore_sigpipe()
+{
+	struct sigaction sa;
+	sa.sa_handler = SIG_IGN;
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGPIPE, &sa, NULL);
+}
+
 
 static void send_mail_smtp(struct mail_action_config *config, struct result *cond_res,
 		struct result *result)
 {
 	smtp_session_t session;
 	smtp_message_t message;
-	smtp_recipient_t recipient;
 	auth_context_t authctx;
 	char body[MAIL_MSG_MAX_SIZE];
 	const smtp_status_t *status;
 	char server[1024];
+
+	ignore_sigpipe(); /* TODO: restore on return */
 
 	auth_client_init();
 	session = smtp_create_session();
@@ -140,8 +151,6 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 		result->code = ACTION_ERROR;
 		return;
 	} else {
-		/* Report on the success or otherwise of the mail transfer.
-		 */
 		status = smtp_message_transfer_status(message);
 		if(status->code == 250){
 			result->code = ACTION_OK;
@@ -152,12 +161,8 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 					(status->text == NULL ? "unknown" : status->text));
 			return;
 		}
-		//printf("%d %s", status->code, (status->text != NULL) ? status->text : "\n");
-		//smtp_enumerate_recipients(message, print_recipient_status, NULL);
 	}
 
-	/* Free resources consumed by the program.
-	 */
 	smtp_destroy_session(session);
 	auth_destroy_context(authctx);
 
@@ -186,9 +191,6 @@ static void send_mail_local(struct mail_action_config *config, struct result *co
 	return;
 }
 
-
-
-
 static void check_configuration(struct mail_action_config *config)
 {
 	if(config->mail_from == NULL)
@@ -201,7 +203,6 @@ static void check_configuration(struct mail_action_config *config)
 	if(config->mail_method == METHOD_SMTP && config->smtp_server == NULL)
 		die("Parameter 'smtp_server' is required for action MAIL, method smtp");
 }
-
 
 static int mail_action_set_options(struct action *action, struct option_value *options)
 {

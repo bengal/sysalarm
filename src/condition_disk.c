@@ -52,8 +52,7 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 	unsigned int usage;
 
 	if (statfs(config->file, &stat) == -1){
-		result->code = CONDITION_ERROR;
-		snprintf(result->desc, RESULT_DESC_LEN, "Error accessing file %s", config->file);
+		set_result(result, CONDITION_ERROR, "Error accessing file %s", config->file);
 		return;
 	}
 
@@ -65,13 +64,12 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 	usage = disk_usage;
 
 	if (usage >= config->threshold){
-		result->code = CONDITION_ON;
-		snprintf(result->desc, RESULT_DESC_LEN, "Disk usage for %s : %ld %%",
+		set_result(result, CONDITION_ON, "Disk usage for %s : %ld %%",
 				config->file, disk_usage);
 		return;
 	}
 
-	result->code = CONDITION_OFF;
+	set_result(result, CONDITION_OFF, NULL);
 }
 
 

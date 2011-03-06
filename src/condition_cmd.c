@@ -19,6 +19,13 @@ struct cmd_condition_config {
 	int expected;
 };
 
+static void set_cmd_error(struct cmd_condition_config *config,
+		struct result *result, char *message) {
+
+	set_result(result, CONDITION_ERROR, "Error executing command '%s': %s",
+			config->cmd_line, message);
+}
+
 static int cmd_cond_set_options(struct condition *condition, struct option_value *options)
 {
 	struct option_value *option;
@@ -57,25 +64,15 @@ static void check_return_value(struct cmd_condition_config *config, int status,
 		struct result *result)
 {
 	if(WIFEXITED(status) && WEXITSTATUS(status) == config->expected) {
-		result->code = CONDITION_OFF;
+		set_result(result, CONDITION_OFF, NULL);
 		return;
 	} else {
-		result->code = CONDITION_ON;
-		snprintf(result->desc, RESULT_DESC_LEN, "The command '%s' exited "
-			" with code %d (expected: %d)", config->cmd_line,
-			WEXITSTATUS(status), config->expected);
+		set_result(result, CONDITION_ON, "The command '%s' exited "
+				" with code %d (expected: %d)", config->cmd_line,
+				WEXITSTATUS(status), config->expected);
 		return;
 	}
 }
-
-static void set_error(struct cmd_condition_config *config,
-		struct result *result, char *message) {
-
-	result->code = CONDITION_ERROR;
-	snprintf(result->desc, RESULT_DESC_LEN, "Error executing command '%s': %s",
-			config->cmd_line, message);
-}
-
 
 static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struct result *result)
 {
@@ -92,7 +89,7 @@ static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struc
 			check_return_value(config, status, result);
 			return;
 		} else if (ret_pid == -1) {
-			set_error(config, result, "Internal error: waitpid()");
+			set_cmd_error(config, result, "Internal error: waitpid()");
 			return;
 		}
 
@@ -102,7 +99,7 @@ static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struc
 		if (current_time - start_time > config->timeout) {
 			debug("Command timeout, killing child process\n");
 			kill(pid, SIGKILL);
-			set_error(config, result, "Command timeout");
+			set_cmd_error(config, result, "Command timeout");
 			return;
 		}
 		sleep(1);
@@ -116,7 +113,7 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 
 	if((pid = fork()) == -1){
 
-		set_error(config, result, "fork()");
+		set_cmd_error(config, result, "fork()");
 		return;
 
 	} else if(pid == 0){
@@ -141,7 +138,6 @@ static void cmd_cond_check_condition(struct condition *condition, struct result 
 	}
 
 }
-
 
 struct condition_type condition_type_cmd = {
 	.name = "CMD",

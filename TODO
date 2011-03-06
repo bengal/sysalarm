@@ -1,6 +1,7 @@
 
 - implement more conditions and actions
-- smtp mail (with starttls)
+- smtp mail (with starttls) - DONE (almost)
+- stateful alarms
 - more robust configuration parsing
 - action chaining
 - syslog logging

@@ -12,12 +12,12 @@ struct cmd_action_config {
 	int background;
 };
 
-static void set_error(struct cmd_action_config *config,
+static void set_cmd_error(struct cmd_action_config *config,
 		struct result *result, char *message) {
 
-	result->code = CONDITION_ERROR;
-	snprintf(result->desc, RESULT_DESC_LEN, "Error executing command '%s': %s",
+	set_result(result, ACTION_ERROR, "Error executing command '%s': %s",
 			config->cmd_line, message);
+
 }
 
 static void cmd_action_trigger_action(struct action *action, struct result *cond_res,
@@ -28,7 +28,7 @@ static void cmd_action_trigger_action(struct action *action, struct result *cond
 
 	if (config->background) {
 		if ((pid = fork()) == -1) {
-			set_error(config, result, "fork()");
+			set_cmd_error(config, result, "fork()");
 			return;
 		} else if (pid == 0) {
 			/* child: launch command */
@@ -48,16 +48,13 @@ static void cmd_action_trigger_action(struct action *action, struct result *cond
 		}
 	} else {
 		if (system(config->cmd_line) == -1) {
-			result->code = ACTION_ERROR;
-			snprintf(result->desc, RESULT_DESC_LEN,
-					"Error launching command: %s", config->cmd_line);
+			set_cmd_error(config, result, "error in system()");
 			return;
 		}
 	}
 
-	result->code = ACTION_OK;
+	set_result(result, ACTION_OK, NULL);
 }
-
 
 static int cmd_action_set_options(struct action *action, struct option_value *options)
 {
