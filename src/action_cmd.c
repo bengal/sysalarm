@@ -9,7 +9,7 @@
 
 struct cmd_action_config {
 	char *cmd_line;
-	int background;
+	int cmd_backgr;
 };
 
 static void set_cmd_error(struct cmd_action_config *config,
@@ -26,7 +26,7 @@ static void cmd_action_trigger_action(struct action *action, struct result *cond
 	struct cmd_action_config *config = action->specific_config;
 	pid_t pid;
 
-	if (config->background) {
+	if (config->cmd_backgr) {
 		if ((pid = fork()) == -1) {
 			set_cmd_error(config, result, "fork()");
 			return;
@@ -71,8 +71,8 @@ static int cmd_action_set_options(struct action *action, struct option_value *op
 
 		if(!strcmp(option->name, "cmd_line")){
 			config->cmd_line = strdup(option->value);
-		} else if(!strcmp(option->name, "background")){
-			config->background = atoi(option->value);
+		} else if(!strcmp(option->name, "cmd_backgr")){
+			config->cmd_backgr = atoi(option->value);
 		} else {
 			die("Unknown option '%s' for action '%s'", option->name, action->name);
 		}

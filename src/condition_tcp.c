@@ -13,8 +13,8 @@
 #include "util.h"
 
 struct tcp_condition_config {
-	char *host;
-	int port;
+	char *tcp_host;
+	int tcp_port;
 };
 
 static int tcp_cond_set_options(struct condition *condition, struct option_value *options)
@@ -31,18 +31,18 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 		if(!option->specific)
 			continue;
 
-		if (!strcmp(option->name, "host")) {
-			config->host = strdup(option->value);
-		} else if (!strcmp(option->name, "port")) {
-			config->port = atoi(option->value);
+		if (!strcmp(option->name, "tcp_host")) {
+			config->tcp_host = strdup(option->value);
+		} else if (!strcmp(option->name, "tcp_port")) {
+			config->tcp_port = atoi(option->value);
 		} else {
 			die("Unknown option '%s' for condition '%s'", option->name,
 			    condition->name);
 		}
 	}
 
-	if(config->host == NULL || config->port == 0)
-		die("Tcp condition: you must supply both host and port parameters");
+	if(config->tcp_host == NULL || config->tcp_port == 0)
+		die("Tcp condition: you must supply both 'tcp_host' and 'tcp_port' parameters");
 
 	return 0;
 }
@@ -52,14 +52,14 @@ static void tcp_cond_check_condition(struct condition *condition, struct result 
 	struct tcp_condition_config *config = condition->specific_config;
 	int sockfd;
 
-	if((sockfd = connect_tcp(config->host, config->port)) >= 0){
+	if((sockfd = connect_tcp(config->tcp_host, config->tcp_port)) >= 0){
 		shutdown(sockfd, SHUT_RDWR);
 		set_result(result, CONDITION_OFF, NULL);
 		return;;
 	}
 
 	set_result(result, CONDITION_ON, "TCP port %d unreachable on host '%s'",
-			config->port, config->host);
+			config->tcp_port, config->tcp_host);
 }
 
 struct condition_type condition_type_tcp = {

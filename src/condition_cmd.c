@@ -13,13 +13,13 @@
 #include "base.h"
 #include "util.h"
 
-struct cmd_condition_config {
+struct cmd_cond_config {
 	char *cmd_line;
-	int timeout;
-	int expected;
+	int cmd_timeout;
+	int cmd_expected;
 };
 
-static void set_cmd_error(struct cmd_condition_config *config,
+static void set_cmd_error(struct cmd_cond_config *config,
 		struct result *result, char *message) {
 
 	set_result(result, CONDITION_ERROR, "Error executing command '%s': %s",
@@ -30,7 +30,7 @@ static int cmd_cond_set_options(struct condition *condition, struct option_value
 {
 	struct option_value *option;
 
-	struct cmd_condition_config *config = calloc(1, sizeof(struct cmd_condition_config));
+	struct cmd_cond_config *config = calloc(1, sizeof(struct cmd_cond_config));
 	CHECK_MALLOC(config);
 	condition->specific_config = config;
 
@@ -42,11 +42,11 @@ static int cmd_cond_set_options(struct condition *condition, struct option_value
 		if (!strcmp(option->name, "cmd_line")) {
 			config->cmd_line = strdup(option->value);
 
-		} else if (!strcmp(option->name, "timeout")) {
-			config->timeout = atoi(option->value);
+		} else if (!strcmp(option->name, "cmd_timeout")) {
+			config->cmd_timeout = atoi(option->value);
 
-		}  else if (!strcmp(option->name, "expected")) {
-			config->expected = atoi(option->value);
+		}  else if (!strcmp(option->name, "cmd_expected")) {
+			config->cmd_expected = atoi(option->value);
 
 		} else {
 			die("Unknown option '%s' for condition '%s'", option->name, condition->name);
@@ -60,21 +60,21 @@ static int cmd_cond_set_options(struct condition *condition, struct option_value
 	return 0;
 }
 
-static void check_return_value(struct cmd_condition_config *config, int status,
+static void check_return_value(struct cmd_cond_config *config, int status,
 		struct result *result)
 {
-	if(WIFEXITED(status) && WEXITSTATUS(status) == config->expected) {
+	if(WIFEXITED(status) && WEXITSTATUS(status) == config->cmd_expected) {
 		set_result(result, CONDITION_OFF, NULL);
 		return;
 	} else {
 		set_result(result, CONDITION_ON, "The command '%s' exited "
 				" with code %d (expected: %d)", config->cmd_line,
-				WEXITSTATUS(status), config->expected);
+				WEXITSTATUS(status), config->cmd_expected);
 		return;
 	}
 }
 
-static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struct result *result)
+static void wait_for_child(pid_t pid, struct cmd_cond_config *config, struct result *result)
 {
 	pid_t ret_pid;
 	int status;
@@ -83,7 +83,7 @@ static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struc
 
 	while (1) {
 		/* check if the child has terminated */
-		ret_pid = waitpid(pid, &status, config->timeout == 0 ? 0 : WNOHANG);
+		ret_pid = waitpid(pid, &status, config->cmd_timeout == 0 ? 0 : WNOHANG);
 
 		if (ret_pid > 0) {
 			check_return_value(config, status, result);
@@ -96,7 +96,7 @@ static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struc
 		/* child process hasn't terminated yet */
 		current_time = time(NULL);
 
-		if (current_time - start_time > config->timeout) {
+		if (current_time - start_time > config->cmd_timeout) {
 			debug("Command timeout, killing child process\n");
 			kill(pid, SIGKILL);
 			set_cmd_error(config, result, "Command timeout");
@@ -108,7 +108,7 @@ static void wait_for_child(pid_t pid, struct cmd_condition_config *config, struc
 
 static void cmd_cond_check_condition(struct condition *condition, struct result *result)
 {
-	struct cmd_condition_config *config = condition->specific_config;
+	struct cmd_cond_config *config = condition->specific_config;
 	pid_t pid;
 
 	if((pid = fork()) == -1){

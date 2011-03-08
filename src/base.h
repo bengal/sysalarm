@@ -6,6 +6,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <time.h>
+
 #define MAX_ELEMENTS 100
 #define BUF_LEN 2048
 
@@ -47,11 +49,18 @@ struct action_type {
 };
 
 struct condition {
+	/* configuration fields */
 	char *name;
 	struct condition_type *type;
 	struct option_value *options;
 	struct action *action;
+	int hold_time;
+	int inactive_time;
 	void *specific_config;
+
+	/* from state file */
+	time_t first_true;
+	time_t last_alarm;
 };
 
 struct condition_type {

@@ -29,11 +29,11 @@ struct mail_action_config {
 	char *mail_from;
 	char *mail_to;
 	char *mail_subject;
-	char *smtp_server;
-	int smtp_server_port;
-	char *smtp_auth_user;
-	char *smtp_auth_pass;
-	int smtp_starttls;
+	char *mail_smtp_server;
+	int mail_smtp_port;
+	char *mail_smtp_user;
+	char *mail_smtp_pass;
+	int mail_smtp_starttls;
 	int mail_method;
 };
 
@@ -81,10 +81,10 @@ static int auth_interact(auth_client_request_t request, char **result, int field
 	struct mail_action_config *config = arg;
 
 	for (i = 0; i < fields; i++) {
-		if ((request[i].flags & AUTH_USER) && config->smtp_auth_user) {
-			result[i] = config->smtp_auth_user;
-		} else if ((request[i].flags & AUTH_PASS) && config->smtp_auth_pass) {
-			result[i] = config->smtp_auth_pass;
+		if ((request[i].flags & AUTH_USER) && config->mail_smtp_user) {
+			result[i] = config->mail_smtp_user;
+		} else if ((request[i].flags & AUTH_PASS) && config->mail_smtp_pass) {
+			result[i] = config->mail_smtp_pass;
 		} else {
 			printf("Credentials needed!\n");
 			return 0;
@@ -125,13 +125,13 @@ static void send_mail_smtp(struct mail_action_config *config, struct result *con
 	authctx = auth_create_context ();
 	auth_set_mechanism_flags (authctx, AUTH_PLUGIN_PLAIN, 0);
 	auth_set_interact_cb(authctx, auth_interact, config);
-	if(config->smtp_starttls)
+	if(config->mail_smtp_starttls)
 		smtp_starttls_enable(session, Starttls_ENABLED);
 	smtp_auth_set_context(session, authctx);
 
 	message = smtp_add_message(session);
 
-	snprintf(server, sizeof(server), "%s:%d", config->smtp_server, config->smtp_server_port);
+	snprintf(server, sizeof(server), "%s:%d", config->mail_smtp_server, config->mail_smtp_port);
 	smtp_set_server(session, server);
 
 	smtp_set_header(message, "To", NULL, config->mail_to);
@@ -200,7 +200,7 @@ static void check_configuration(struct mail_action_config *config)
 	if(config->mail_subject == NULL)
 		die("Parameter 'mail_subject' is required for action MAIL");
 
-	if(config->mail_method == METHOD_SMTP && config->smtp_server == NULL)
+	if(config->mail_method == METHOD_SMTP && config->mail_smtp_server == NULL)
 		die("Parameter 'smtp_server' is required for action MAIL, method smtp");
 }
 
@@ -225,20 +225,20 @@ static int mail_action_set_options(struct action *action, struct option_value *o
 		} else if (!strcmp(option->name, "mail_subject")) {
 			config->mail_subject = strdup(option->value);
 
-		} else if (!strcmp(option->name, "smtp_server")) {
-			config->smtp_server = strdup(option->value);
+		} else if (!strcmp(option->name, "mail_smtp_server")) {
+			config->mail_smtp_server = strdup(option->value);
 
-		} else if (!strcmp(option->name, "smtp_server_port")) {
-			config->smtp_server_port = atoi(option->value);
+		} else if (!strcmp(option->name, "mail_smtp_port")) {
+			config->mail_smtp_port = atoi(option->value);
 
-		} else if (!strcmp(option->name, "smtp_auth_user")){
-			config->smtp_auth_user = strdup(option->value);
+		} else if (!strcmp(option->name, "mail_smtp_user")){
+			config->mail_smtp_user = strdup(option->value);
 
-		} else if (!strcmp(option->name, "smtp_auth_pass")){
-			config->smtp_auth_pass = strdup(option->value);
+		} else if (!strcmp(option->name, "mail_smtp_pass")){
+			config->mail_smtp_pass = strdup(option->value);
 
-		} else if (!strcmp(option->name, "smtp_starttls")){
-			config->smtp_starttls = atoi(option->value);
+		} else if (!strcmp(option->name, "mail_smtp_starttls")){
+			config->mail_smtp_starttls = atoi(option->value);
 
 		} else if (!strcmp(option->name, "mail_method")) {
 

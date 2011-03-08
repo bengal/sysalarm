@@ -155,6 +155,19 @@ void create_new_condition(struct option_value *options)
 		die("The condition type '%s' does not exist", option->value);
 
 	condition->type = type;
+
+	option = search_option(options, "hold_time");
+	if (option) {
+		option->specific = 0;
+		condition->hold_time = atoi(option->value);
+	}
+
+	option = search_option(options, "inactive_time");
+	if (option) {
+		option->specific = 0;
+		condition->hold_time = atoi(option->value);
+	}
+
 	type->set_options(condition, options);
 
 }

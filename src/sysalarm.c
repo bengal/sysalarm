@@ -8,7 +8,13 @@
 
 #include "base.h"
 #include "parse.h"
+#include "state.h"
 #include "util.h"
+
+#ifndef SYS_CONF_DIR
+#define SYS_CONF_DIR "/etc"
+#endif
+#define CONF_FILE SYS_CONF_DIR "/sysalarm.conf"
 
 void print_usage()
 {
@@ -52,32 +58,66 @@ void print_version()
 
 }
 
+
+int trigger_action(struct condition *cond, struct result *cond_res)
+{
+	time_t now = time(NULL);
+	struct result action_res;
+
+	if(cond->inactive_time == 0 || (now - cond->last_alarm) > cond->inactive_time){
+		struct action *action = cond->action;
+		debug("Triggering action '%s' for condition '%s'\n", action->name, cond->name);
+		action->type->trigger_action(action, cond_res, &action_res);
+		cond->last_alarm = now;
+
+		if(action_res.code != ACTION_OK){
+			return -1;
+			printf("Action %s returned an ERROR!\n", action->name);
+		}
+	}
+
+	return 0;
+}
+
+void manage_active_cond(struct condition *cond, struct result *result)
+{
+	time_t now = time(NULL);
+
+	if(cond->hold_time == 0){
+		debug("Condition active: %s\n", cond->name);
+		trigger_action(cond, result);
+		cond->first_true = 0;
+	} else {
+		if(cond->first_true == 0){
+			cond->first_true = now;
+		}
+		if((now - cond->first_true) > cond->hold_time){
+			debug("Condition active and hold time exceeded: %s\n", cond->name);
+			trigger_action(cond, result);
+			cond->first_true = 0;
+		}
+	}
+}
+
 void check_alarms(int trigger_action)
 {
 	int i;
 	struct result cond_res;
-	struct result action_res;
 
 	for(i = 0; i < MAX_ELEMENTS; i++){
-
-		if(conditions[i].name == NULL)
+		struct condition *cond = &conditions[i];
+		if(cond->name == NULL)
 			break;
 
 		memset(&cond_res, 0, sizeof(struct result));
-		conditions[i].type->check_condition(&conditions[i], &cond_res);
+		cond->type->check_condition(cond, &cond_res);
 
-		if(cond_res.code == CONDITION_ON || cond_res.code == CONDITION_ERROR){
-
+		if(cond_res.code != CONDITION_OFF){
 			if(trigger_action){
-				struct action *action = conditions[i].action;
-				action->type->trigger_action(action, &cond_res, &action_res);
-				if(action_res.code != ACTION_OK){
-					printf("Action %s returned an ERROR!\n", action->name);
-				}
+				manage_active_cond(cond, &cond_res);
 			} else {
-				printf("ALARM CONDITION: %s (msg: %s)(type:%s)\n", conditions[i].name,
-						cond_res.desc,
-						conditions[i].type->name);
+				printf("ALARM CONDITION: %s (msg: %s)(type:%s)\n", cond->name,
+						cond_res.desc, cond->type->name);
 			}
 		}
 
@@ -165,14 +205,10 @@ struct option long_options[] = {
 		{0, 0, 0, 0}
 };
 
-#ifndef SYSCONFDIR
-#define SYSCONFDIR "/etc"
-#endif
-
 int main(int argc, char **argv)
 {
 	int opt, option_index = 0;
-	char *config_file = SYSCONFDIR "/sysalarm.conf";
+	char *config_file = CONF_FILE;
 	char *simul_cond = NULL;
 	int summary = 0;
 	int list = 0;
@@ -209,6 +245,7 @@ int main(int argc, char **argv)
 	}
 
 	parse_config_file(config_file);
+	read_cond_states();
 
 	if(types){
 		print_types();
@@ -230,7 +267,11 @@ int main(int argc, char **argv)
 		exit(0);
 	}
 
+	read_cond_states();
 	check_alarms(1);
+	if(write_cond_states() == -1){
+		printf("Error saving application state\n");
+	}
 
 	return 0;
 }
