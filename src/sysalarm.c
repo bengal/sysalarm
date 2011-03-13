@@ -31,7 +31,7 @@ void print_usage()
 
 		"Options:\n"
 		"   -c CONFIG_FILE    specify a configuration file other than default\n"
-		"   -t COND_NAME      simulate an alarm condition (trigger associated action)\n"
+		"   -t COND_NAME      simulate an alarm condition (trigger associated actions)\n"
 		"   -s                print a summary of configuration options\n"
 		"   -a                check for alarm conditions (don't trigger actions)\n"
 		"   -l                list available condition and action types\n"
@@ -65,15 +65,24 @@ int trigger_action(struct condition *cond, struct result *cond_res)
 	struct result action_res;
 
 	if(cond->inactive_time == 0 || (now - cond->last_alarm) > cond->inactive_time){
-		struct action *action = cond->action;
-		debug("Triggering action '%s' for condition '%s'\n", action->name, cond->name);
-		action->type->trigger_action(action, cond_res, &action_res);
+
+		struct cond_reg_action **ptr = cond->actions;
 		cond->last_alarm = now;
 
-		if(action_res.code != ACTION_OK){
-			return -1;
-			printf("Action %s returned an ERROR!\n", action->name);
+		while(*ptr){
+			struct cond_reg_action *cra = *ptr;
+			cra->action->type->trigger_action(cra->action, cond_res, &action_res);
+			if(cra->stop && action_res.code == ACTION_OK){
+				debug("Action '%s' for cond '%s' was successful and stop bit set: break\n",
+						cra->action->name, cond->name);
+				break;
+			}
+			if(action_res.code != ACTION_OK){
+				debug("Action '%s' failed\n", cra->action);
+			}
+			ptr++;
 		}
+		return 1;
 	}
 
 	return 0;
@@ -126,7 +135,6 @@ void check_alarms(int trigger_action)
 
 void simulate_alarm(char *condition_name)
 {
-	struct result action_result;
 	struct result fake_cond_result;
 	struct condition *cond = search_condition(condition_name);
 
@@ -134,20 +142,12 @@ void simulate_alarm(char *condition_name)
 		die("Condition '%s' not found", condition_name);
 
 	memset(&fake_cond_result, 0, sizeof(struct result));
-	memset(&action_result, 0, sizeof(struct result));
 
 	fake_cond_result.code = CONDITION_ON;
 	snprintf(fake_cond_result.desc, RESULT_DESC_LEN,
 			"alarm simulation for condition: %s", condition_name);
 
-	cond->action->type->trigger_action(cond->action, &fake_cond_result, &action_result);
-	if(action_result.code == ACTION_OK){
-		printf("Action successful\n");
-	} else {
-		printf("Action error: %s\n", result_get_description(&action_result));
-	}
-
-
+	trigger_action(cond, &fake_cond_result);
 }
 
 void print_config_summary()
@@ -171,8 +171,9 @@ void print_config_summary()
 		if(conditions[i].name == NULL)
 			break;
 
-		printf(" * %-20s type: %-15s action: %-20s\n",
-				conditions[i].name, conditions[i].type->name, conditions[i].action->name);
+		printf(" * %-20s type: %-15s actions: %-20s\n",
+				conditions[i].name, conditions[i].type->name,
+				conditions[i].actions[0]->action->name); /* FIXME show all actions */
 	}
 }
 

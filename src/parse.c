@@ -109,12 +109,56 @@ void add_option(struct option_value **options, char *name, char *value)
 	}
 }
 
+void parse_cond_actions(struct condition *cond, char *str)
+{
+	char *line = strdup(str);
+	char *ptr = line;
+	int ntokens = 1;
+	int count = 0;
+
+	while(*ptr){
+		if(*ptr == ',')
+			ntokens++;
+		ptr++;
+	}
+
+	cond->actions = calloc(ntokens + 1, sizeof(struct cond_reg_action *));
+	ptr = strtok(str, ",");
+	if(!ptr)
+		die("You must specify at least an action for every condition");
+
+	while(ptr){
+		struct action *action;
+		struct cond_reg_action *cra;
+		int stop = 0;
+
+		ptr = trim(ptr);
+		if(*ptr == '#'){
+			stop = 1;
+			ptr++;
+		}
+		action  = search_action(ptr);
+
+		if(!action)
+			die("Action '%s' is undefined\n", ptr);
+
+		cra = malloc(sizeof(struct cond_reg_action));
+		CHECK_MALLOC(cra);
+
+		cra->action = action;
+		cra->stop = stop;
+
+		cond->actions[count++] = cra;
+		ptr = strtok(NULL, ",");
+	}
+
+}
+
 void create_new_condition(struct option_value *options)
 {
 	struct condition *condition = new_condition();
 	struct option_value *option;
 	struct condition_type *type;
-	struct action *action;
 
 	if (!condition)
 		die("Too many conditions");
@@ -132,15 +176,10 @@ void create_new_condition(struct option_value *options)
 	option = search_option(options, "action");
 
 	if(!option)
-		die("You must specify an alarm for every condition");
+		die("You must specify at least an action for every condition");
 
 	option->specific = 0;
-	action = search_action(option->value);
-
-	if(!action)
-		die("The action with name '%s' is undefined", option->value);
-
-	condition->action = action;
+	parse_cond_actions(condition, option->value);
 
 	/* Initialize condition type */
 	option = search_option(options, "type");

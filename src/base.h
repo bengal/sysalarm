@@ -48,12 +48,17 @@ struct action_type {
 			struct result *result);
 };
 
+struct cond_reg_action {
+	struct action *action;
+	int stop;
+};
+
 struct condition {
 	/* configuration fields */
 	char *name;
 	struct condition_type *type;
 	struct option_value *options;
-	struct action *action;
+	struct cond_reg_action **actions;
 	int hold_time;
 	int inactive_time;
 	void *specific_config;
