@@ -16,6 +16,9 @@ AC_PROG_INSTALL
 # Checks for libraries.
 AC_CHECK_LIB([esmtp], [smtp_create_session], [], [AC_MSG_ERROR([libesmtp not found])])
 
+PKG_CHECK_MODULES(IKSEMEL,iksemel,,exit)
+
+
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h netdb.h stdlib.h string.h sys/socket.h sys/vfs.h unistd.h])
 
@@ -28,6 +31,11 @@ AC_TYPE_SSIZE_T
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gethostbyname gethostname memset socket strchr strdup])
+
+
+CFLAGS="$CFLAGS $IKSEMEL_CFLAGS"
+LDFLAGS="$LDFLAGS $IKSEMEL_LIBS"
+
 
 AC_CONFIG_FILES([Makefile
                  man/Makefile

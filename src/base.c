@@ -25,11 +25,13 @@ struct condition_type *condition_types[] = {
 
 extern struct action_type action_type_mail;
 extern struct action_type action_type_cmd;
+extern struct action_type action_type_xmpp;
 struct action_type action_type_dummy = { .name = NULL };
 
 struct action_type *action_types[] = {
 	&action_type_mail,
 	&action_type_cmd,
+	&action_type_xmpp,
 	&action_type_dummy
 };
 
