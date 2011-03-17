@@ -258,7 +258,7 @@ void parse_config_file(char *file_name)
 	char *sep;
 	char *name, *value;
 
-	debug("Parsing file %s\n", file_name);
+	sa_log(SA_LOG_DEBUG, "Parsing file %s\n", file_name);
 
 	if ((file = fopen(file_name, "r")) == NULL) {
 		die("Error opening configuration file %s\n", file_name);

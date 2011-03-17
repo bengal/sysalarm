@@ -35,7 +35,8 @@ void print_usage()
 		"   -s                print a summary of configuration options\n"
 		"   -a                check for alarm conditions (don't trigger actions)\n"
 		"   -l                list available condition and action types\n"
-		"   -v, --version     output version information and exit\n"
+		"   -V, --version     output version information and exit\n"
+		"   -v LEVEL          set verbosity level (0=DEBUG,1=INFO,2=NOTICE,3=WARN,4=ERR)\n"
 		"   -h, --help        display this help and exit\n\n"
 
 		"Examples:\n"
@@ -73,12 +74,12 @@ int trigger_action(struct condition *cond, struct result *cond_res)
 			struct cond_reg_action *cra = *ptr;
 			cra->action->type->trigger_action(cra->action, cond_res, &action_res);
 			if(cra->stop && action_res.code == ACTION_OK){
-				debug("Action '%s' for cond '%s' was successful and stop bit set: break\n",
+				sa_log(SA_LOG_DEBUG, "Action '%s' for cond '%s' was successful and stop bit set: break\n",
 						cra->action->name, cond->name);
 				break;
 			}
 			if(action_res.code != ACTION_OK){
-				debug("Action '%s' failed\n", cra->action);
+				sa_log(SA_LOG_DEBUG, "Action '%s' failed\n", cra->action);
 			}
 			ptr++;
 		}
@@ -93,7 +94,8 @@ void manage_active_cond(struct condition *cond, struct result *result)
 	time_t now = time(NULL);
 
 	if(cond->hold_time == 0){
-		debug("Condition active: %s\n", cond->name);
+		sa_log(SA_LOG_WARN, "Condition active: %s\n", cond->name);
+		printf("Condition active: %s\n", cond->name);
 		trigger_action(cond, result);
 		cond->first_true = 0;
 	} else {
@@ -101,7 +103,8 @@ void manage_active_cond(struct condition *cond, struct result *result)
 			cond->first_true = now;
 		}
 		if((now - cond->first_true) > cond->hold_time){
-			debug("Condition active and hold time exceeded: %s\n", cond->name);
+			sa_log(SA_LOG_WARN, "Condition active and hold time exceeded: %s\n", cond->name);
+			printf("Condition active and hold time exceeded: %s\n", cond->name);
 			trigger_action(cond, result);
 			cond->first_true = 0;
 		}
@@ -201,7 +204,7 @@ void print_types()
 }
 
 struct option long_options[] = {
-		{"version", 0, 0, 'v'},
+		{"version", 0, 0, 'V'},
 		{"help", 0, 0, 'h'},
 		{0, 0, 0, 0}
 };
@@ -215,7 +218,7 @@ int main(int argc, char **argv)
 	int list = 0;
 	int types = 0;
 
-	while ((opt = getopt_long(argc, argv, "c:t:slahv", long_options, &option_index)) != -1) {
+	while ((opt = getopt_long(argc, argv, "c:t:slahv:V", long_options, &option_index)) != -1) {
 		switch (opt) {
 		case 'l':
 			types = 1;
@@ -237,6 +240,9 @@ int main(int argc, char **argv)
 			list = 1;
 			break;
 		case 'v':
+			loglevel = atoi(optarg);
+			break;
+		case 'V':
 			print_version();
 			exit(0);
 		default:
@@ -271,7 +277,7 @@ int main(int argc, char **argv)
 	read_cond_states();
 	check_alarms(1);
 	if(write_cond_states() == -1){
-		printf("Error saving application state\n");
+		sa_log(SA_LOG_ERR, "Error saving application state\n");
 	}
 
 	return 0;

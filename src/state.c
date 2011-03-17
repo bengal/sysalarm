@@ -33,11 +33,11 @@ int read_cond_states()
 	while (fscanf(file, "%255s %d %d", name, &first_true, &last_alarm ) != EOF) {
 		struct condition * cond = search_condition(name);
 		if (cond != NULL) {
-			debug("state for '%s' : %d %d\n", name, first_true, last_alarm);
+			sa_log(SA_LOG_DEBUG, "state for '%s' : %d %d\n", name, first_true, last_alarm);
 			cond->first_true = first_true;
 			cond->last_alarm = last_alarm;
 		} else {
-			debug("condition %s not found reading state file\n", name);
+			sa_log(SA_LOG_DEBUG, "condition %s not found reading state file\n", name);
 		}
 	}
 

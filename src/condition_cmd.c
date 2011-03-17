@@ -97,7 +97,7 @@ static void wait_for_child(pid_t pid, struct cmd_cond_config *config, struct res
 		current_time = time(NULL);
 
 		if (current_time - start_time > config->cmd_timeout) {
-			debug("Command timeout, killing child process\n");
+			sa_log(SA_LOG_DEBUG, "Command timeout, killing child process\n");
 			kill(pid, SIGKILL);
 			set_cmd_error(config, result, "Command timeout");
 			return;

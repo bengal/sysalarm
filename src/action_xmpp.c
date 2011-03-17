@@ -62,7 +62,7 @@ static void on_log(struct xmpp_session *sess, const char *text, size_t size, int
 	char *secure = "";
 	if (iks_is_secure (sess->prs)) secure = "Sec ";
 	if (!is_incoming) type = "SEND";
-	debug("%s%s [%s]\n", secure, type, text);
+	sa_log(SA_LOG_DEBUG, "%s%s [%s]\n", secure, type, text);
 }
 
 static int on_stream(struct xmpp_session *session, int type, iks *node) {
@@ -103,7 +103,7 @@ static int on_stream(struct xmpp_session *session, int type, iks *node) {
 			iks_send_header(session->prs, session->acc->server);
 		}
 		else if (strcmp("failure", iks_name(node)) == 0)
-			debug("SASL authentication failed\n");
+			sa_log(SA_LOG_DEBUG, "SASL authentication failed\n");
 		else {
 			ikspak *pak;
 			pak = iks_packet(node);
@@ -111,11 +111,11 @@ static int on_stream(struct xmpp_session *session, int type, iks *node) {
 		}
 		break;
 	case IKS_NODE_STOP:
-		debug( "Server disconnected");
+		sa_log(SA_LOG_DEBUG, "Server disconnected");
 	case IKS_NODE_ERROR:
-		debug( "Stream error");
+		sa_log(SA_LOG_DEBUG, "Stream error");
 	default:
-		debug( "Unknown node type %d", type);
+		sa_log(SA_LOG_DEBUG, "Unknown node type %d", type);
 	}
 
 	if (node)
@@ -162,14 +162,14 @@ struct xmpp_session *xmpp_connect(struct xmpp_action_config *config)
 
 	switch(result) {
 	case IKS_OK:
-		debug("Connection OK\n");
+		sa_log(SA_LOG_DEBUG, "Connection OK\n");
 		break;
 	case IKS_NET_NODNS:
-		debug( "DNS lookup of '%s' failed", config->xmpp_server);
+		sa_log(SA_LOG_DEBUG, "DNS lookup of '%s' failed", config->xmpp_server);
 	case IKS_NET_NOCONN:
-		debug("Connection to '%s' failed", config->xmpp_server);
+		sa_log(SA_LOG_DEBUG, "Connection to '%s' failed", config->xmpp_server);
 	default:
-		debug("Unspecified error %d from iksemel", result);
+		sa_log(SA_LOG_DEBUG, "Unspecified error %d from iksemel", result);
 	}
 	return sess;
 

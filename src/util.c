@@ -11,10 +11,14 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <syslog.h>
 
 #include "base.h"
+#include "util.h"
 
-#define DBG 1
+
+int loglevel = SA_LOG_WARN;
+int logopen = 0;
 
 void die(char *fmt, ...)
 {
@@ -30,19 +34,22 @@ void die(char *fmt, ...)
 	exit(1);
 }
 
-#if DBG
-void debug(char *fmt, ...)
+void sa_log(int level, char *fmt, ...)
 {
 	va_list argList;
 
-	printf("DEBUG: ");
-	va_start(argList, fmt);
-	vprintf(fmt, argList);
-	va_end(argList);
+	if(level >= loglevel){
+		if(!logopen){
+			openlog("sysalarm", 0, LOG_USER);
+			logopen = 1;
+		}
+
+		va_start(argList, fmt);
+		vsyslog(LOG_NOTICE, fmt, argList);
+		va_end(argList);
+	}
 }
-#else
-void debug(char *fmt, ...){}
-#endif
+
 
 void set_result(struct result *result, int code, char *fmt, ...)
 {
@@ -59,7 +66,7 @@ int connect_tcp(char *host, unsigned short port)
 	struct hostent *server;
 	struct sockaddr_in serv_addr;
 
-	debug("Connecting to %s %hd\n", host, port);
+	sa_log(SA_LOG_DEBUG, "Connecting to %s %hd\n", host, port);
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		return -1;

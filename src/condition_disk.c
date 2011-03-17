@@ -58,8 +58,9 @@ static void disk_cond_check_condition(struct condition *condition, struct result
 
 	disk_usage = stat.f_bfree * 100 / stat.f_blocks;
 
-	debug("Disk usage for %s : %ld / %ld = %ld\n", config->disk_file, stat.f_bfree,
-	      stat.f_blocks, disk_usage);
+	sa_log(SA_LOG_DEBUG, "Disk usage for %s : %ld / %ld = %ld\n",
+			config->disk_file, stat.f_bfree,
+			stat.f_blocks, disk_usage);
 
 	usage = disk_usage;
 
