@@ -60,6 +60,27 @@ struct option_value *search_option(struct option_value *head, char *name)
 	return NULL;
 }
 
+struct option_value *pop_option(struct option_value **head, char *name)
+{
+	struct option_value *opt, *res;
+
+	if(*head != NULL && !(strcmp((*head)->name, name))){
+		res = *head;
+		*head = res->next;
+		return res;
+	}
+
+	for(opt = *head; opt != NULL; opt = opt->next) {
+		if(opt->next != NULL && !strcmp(opt->next->name, name)) {
+			res = opt->next;
+			opt->next = opt->next->next;
+			return res;
+		}
+	}
+
+	return NULL;
+}
+
 char *parse_section_name(char *str)
 {
 	char *name = strtok(str, " \t");
@@ -99,7 +120,6 @@ void add_option(struct option_value **options, char *name, char *value)
 	new_opt->name = strdup(name);
 	new_opt->value = strdup(value);
 	new_opt->next = NULL;
-	new_opt->specific = 1;
 
 	if (*options == NULL) {
 		*options = new_opt;
@@ -133,7 +153,7 @@ void parse_cond_actions(struct condition *cond, char *str)
 		int stop = 0;
 
 		ptr = trim(ptr);
-		if(*ptr == '#'){
+		if(*ptr == '!'){
 			stop = 1;
 			ptr++;
 		}
@@ -164,30 +184,27 @@ void create_new_condition(struct option_value *options)
 		die("Too many conditions");
 
 	/* Initialize condition name */
-	option = search_option(options, "name");
+	option = pop_option(&options, "name");
 
 	if(!option)
 		die("You must specify a name for every condition");
 
-	option->specific = 0;
 	condition->name = option->value;
 
 	/* Initialize condition action */
-	option = search_option(options, "action");
+	option = pop_option(&options, "action");
 
 	if(!option)
 		die("You must specify at least an action for every condition");
 
-	option->specific = 0;
 	parse_cond_actions(condition, option->value);
 
 	/* Initialize condition type */
-	option = search_option(options, "type");
+	option = pop_option(&options, "type");
 
 	if (!option)
 		die("You must specify a type for every condition");
 
-	option->specific = 0;
 	type = search_condition_type(option->value);
 
 	if (!type)
@@ -195,17 +212,13 @@ void create_new_condition(struct option_value *options)
 
 	condition->type = type;
 
-	option = search_option(options, "hold_time");
-	if (option) {
-		option->specific = 0;
+	option = pop_option(&options, "hold_time");
+	if (option)
 		condition->hold_time = atoi(option->value);
-	}
 
-	option = search_option(options, "inactive_time");
-	if (option) {
-		option->specific = 0;
+	option = pop_option(&options, "inactive_time");
+	if (option)
 		condition->hold_time = atoi(option->value);
-	}
 
 	type->set_options(condition, options);
 
@@ -221,21 +234,19 @@ void create_new_action(struct option_value *options)
 		die("Too many actions");
 
 	/* Initialize action name */
-	option = search_option(options, "name");
+	option = pop_option(&options, "name");
 
 	if(!option)
 		die("You must specify a name for every condition");
 
-	option->specific = 0;
 	action->name = option->value;
 
 	/* Initialize action type */
-	option = search_option(options, "type");
+	option = pop_option(&options, "type");
 
 	if (!option)
 		die("You must specify a type for every action");
 
-	option->specific = 0;
 	type = search_action_type(option->value);
 
 	if (!type)

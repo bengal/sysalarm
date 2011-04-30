@@ -32,12 +32,9 @@ static int cmd_cond_set_options(struct condition *condition, struct option_value
 
 	struct cmd_cond_config *config = calloc(1, sizeof(struct cmd_cond_config));
 	CHECK_MALLOC(config);
-	condition->specific_config = config;
+	condition->priv_config = config;
 
 	for (option = options; option != NULL; option = option->next) {
-
-		if(!option->specific)
-			continue;
 
 		if (!strcmp(option->name, "cmd_line")) {
 			config->cmd_line = strdup(option->value);
@@ -108,7 +105,7 @@ static void wait_for_child(pid_t pid, struct cmd_cond_config *config, struct res
 
 static void cmd_cond_check_condition(struct condition *condition, struct result *result)
 {
-	struct cmd_cond_config *config = condition->specific_config;
+	struct cmd_cond_config *config = condition->priv_config;
 	pid_t pid;
 
 	if((pid = fork()) == -1){

@@ -22,22 +22,21 @@ struct option_value {
 	char *name;
 	char *value;
 	struct option_value *next;
-	int specific;
 };
 
 #define RESULT_DESC_LEN 1024
 
 /* Result of a condition or action */
 struct result {
-	int code;					/* result code */
-	char desc[RESULT_DESC_LEN];	/* result description */
-	char *ext_desc;				/* optional extended description */
+	int code;                      /* result code */
+	char desc[RESULT_DESC_LEN];    /* result description */
+	char *ext_desc;		       /* optional extended description */
 };
 
 struct action {
 	char *name;
 	struct action_type *type;
-	void *specific_config;
+	void *priv_config;
 };
 
 struct action_type {
@@ -61,7 +60,7 @@ struct condition {
 	struct cond_reg_action **actions;
 	int hold_time;
 	int inactive_time;
-	void *specific_config;
+	void *priv_config;
 
 	/* from state file */
 	time_t first_true;

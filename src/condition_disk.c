@@ -22,12 +22,9 @@ static int disk_cond_set_options(struct condition *condition, struct option_valu
 
 	struct disk_cond_config *config = calloc(1, sizeof(struct disk_cond_config));
 	CHECK_MALLOC(config);
-	condition->specific_config = config;
+	condition->priv_config = config;
 
 	for (option = options; option != NULL; option = option->next) {
-
-		if(!option->specific)
-			continue;
 
 		if (!strcmp(option->name, "disk_file")) {
 			config->disk_file = strdup(option->value);
@@ -46,7 +43,7 @@ static int disk_cond_set_options(struct condition *condition, struct option_valu
 
 static void disk_cond_check_condition(struct condition *condition, struct result *result)
 {
-	struct disk_cond_config *config = condition->specific_config;
+	struct disk_cond_config *config = condition->priv_config;
 	struct statfs stat;
 	long disk_usage;
 	unsigned int usage;

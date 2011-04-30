@@ -22,14 +22,11 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 	struct option_value *option;
 
 	struct tcp_condition_config *config = calloc(1, sizeof(struct tcp_condition_config));
-	condition->specific_config = config;
+	condition->priv_config = config;
 
 	CHECK_MALLOC(config);
 
 	for (option = options; option != NULL; option = option->next) {
-
-		if(!option->specific)
-			continue;
 
 		if (!strcmp(option->name, "tcp_host")) {
 			config->tcp_host = strdup(option->value);
@@ -49,7 +46,7 @@ static int tcp_cond_set_options(struct condition *condition, struct option_value
 
 static void tcp_cond_check_condition(struct condition *condition, struct result *result)
 {
-	struct tcp_condition_config *config = condition->specific_config;
+	struct tcp_condition_config *config = condition->priv_config;
 	int sockfd;
 
 	if((sockfd = connect_tcp(config->tcp_host, config->tcp_port)) >= 0){

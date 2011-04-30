@@ -178,7 +178,7 @@ struct xmpp_session *xmpp_connect(struct xmpp_action_config *config)
 static void xmpp_action_trigger_action(struct action *action, struct result *cond_res,
 		struct result *result)
 {
-	struct xmpp_action_config *config = action->specific_config;
+	struct xmpp_action_config *config = action->priv_config;
 	struct xmpp_session *session = xmpp_connect(config);
 	if(!session){
 		set_result(result, ACTION_ERROR, "Could not connect to XMPP server");
@@ -208,13 +208,10 @@ static int xmpp_action_set_options(struct action *action, struct option_value *o
 	struct option_value *option;
 	struct xmpp_action_config *config = calloc(1, sizeof(struct xmpp_action_config));
 	CHECK_MALLOC(config);
-	action->specific_config = config;
+	action->priv_config = config;
 	config->xmpp_port = IKS_JABBER_PORT;
 
 	for (option = options; option != NULL; option = option->next) {
-
-		if(!option->specific)
-			continue;
 
 		if (!strcmp(option->name, "xmpp_server")) {
 			config->xmpp_server = strdup(option->value);

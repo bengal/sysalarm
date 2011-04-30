@@ -23,7 +23,7 @@ static void set_cmd_error(struct cmd_action_config *config,
 static void cmd_action_trigger_action(struct action *action, struct result *cond_res,
 		struct result *result)
 {
-	struct cmd_action_config *config = action->specific_config;
+	struct cmd_action_config *config = action->priv_config;
 	pid_t pid;
 
 	if (config->cmd_backgr) {
@@ -60,14 +60,11 @@ static int cmd_action_set_options(struct action *action, struct option_value *op
 {
 	struct option_value *option;
 	struct cmd_action_config *config = calloc(1, sizeof(struct cmd_action_config));
-	action->specific_config = config;
+	action->priv_config = config;
 
 	CHECK_MALLOC(config);
 
 	for(option = options; option != NULL; option = option->next){
-
-		if(!option->specific)
-			continue;
 
 		if(!strcmp(option->name, "cmd_line")){
 			config->cmd_line = strdup(option->value);

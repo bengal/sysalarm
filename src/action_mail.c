@@ -209,12 +209,9 @@ static int mail_action_set_options(struct action *action, struct option_value *o
 	struct option_value *option;
 	struct mail_action_config *config = calloc(1, sizeof(struct mail_action_config));
 	CHECK_MALLOC(config);
-	action->specific_config = config;
+	action->priv_config = config;
 
 	for (option = options; option != NULL; option = option->next) {
-
-		if(!option->specific)
-			continue;
 
 		if (!strcmp(option->name, "mail_from")) {
 			config->mail_from = strdup(option->value);
@@ -265,7 +262,7 @@ static int mail_action_set_options(struct action *action, struct option_value *o
 static void mail_action_trigger_action(struct action *action, struct result *cond_res,
 		struct result *result)
 {
-	struct mail_action_config *config = action->specific_config;
+	struct mail_action_config *config = action->priv_config;
 
 	if(config->mail_method == METHOD_LOCAL){
 		send_mail_local(config, cond_res, result);
